@@ -2,39 +2,33 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './MiseEnPlace.css';
 
-interface ChecklistItem {
-  id: string;
-  name: string;
-  checked: boolean;
-}
-
 function MiseEnPlace() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recipeName, recipeData, isFromHistory } = location.state || {};
+  const { recipeName, recipeData, fromPage } = location.state || {};
 
   // Mock data - in a real app, this would come from the recipe data
-  const [tools, setTools] = useState<ChecklistItem[]>([
+  const [tools, setTools] = useState([
     { id: 't1', name: 'Frying pan', checked: false },
     { id: 't2', name: 'Spatula', checked: false },
     { id: 't3', name: 'Toaster', checked: false },
     { id: 't4', name: 'Plate', checked: false },
   ]);
 
-  const [ingredients, setIngredients] = useState<ChecklistItem[]>([
+  const [ingredients, setIngredients] = useState([
     { id: 'i1', name: '2 eggs', checked: false },
     { id: 'i2', name: '2 slices of bread', checked: false },
     { id: 'i3', name: '1 tbs butter', checked: false },
     { id: 'i4', name: 'Salt and pepper', checked: false },
   ]);
 
-  const toggleTool = (id: string) => {
+  const toggleTool = (id) => {
     setTools(tools.map(tool => 
       tool.id === id ? { ...tool, checked: !tool.checked } : tool
     ));
   };
 
-  const toggleIngredient = (id: string) => {
+  const toggleIngredient = (id) => {
     setIngredients(ingredients.map(ingredient => 
       ingredient.id === id ? { ...ingredient, checked: !ingredient.checked } : ingredient
     ));
@@ -45,7 +39,8 @@ function MiseEnPlace() {
       state: { 
         recipeName: recipeName || 'Recipe',
         nextPage: 'timeline',
-        recipeData
+        recipeData,
+        fromPage: 'mise-en-place'
       } 
     });
   };

@@ -2,21 +2,13 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './SearchResults.css';
 
-interface Recipe {
-  id: string;
-  name: string;
-  time: number;
-  dishes: number;
-  isHistory: boolean;
-}
-
 function SearchResults() {
   const navigate = useNavigate();
   const location = useLocation();
   const { filters } = location.state || {};
 
   // Mock recipe data - in a real app, this would come from an API
-  const [recipes] = useState<Recipe[]>([
+  const [recipes] = useState([
     { id: '1', name: 'Scrambled Eggs', time: 10, dishes: 2, isHistory: true },
     { id: '2', name: 'Fried Egg on Toast', time: 15, dishes: 3, isHistory: true },
     { id: '3', name: 'Classic Omelette', time: 12, dishes: 2, isHistory: false },
@@ -29,12 +21,13 @@ function SearchResults() {
   const historyRecipes = recipes.filter(r => r.isHistory);
   const webRecipes = recipes.filter(r => !r.isHistory);
 
-  const handleRecipeClick = (recipe: Recipe) => {
+  const handleRecipeClick = (recipe) => {
     navigate('/loading', { 
       state: { 
         recipeName: recipe.name,
         nextPage: 'mise-en-place',
-        recipeData: recipe 
+        recipeData: recipe,
+        fromPage: 'search-results'
       } 
     });
   };

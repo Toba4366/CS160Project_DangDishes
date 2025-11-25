@@ -2,14 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RecipeSearch.css';
 
-interface IngredientHistory {
-  name: string;
-  lastUsed: string;
-}
-
 function RecipeSearch() {
   const navigate = useNavigate();
-  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [ingredientInput, setIngredientInput] = useState('');
   const [minTime, setMinTime] = useState(0);
   const [maxTime, setMaxTime] = useState(60);
@@ -17,25 +12,25 @@ function RecipeSearch() {
   const [maxDishes, setMaxDishes] = useState(10);
 
   // Mock ingredient history - in a real app, this would come from local storage or a database
-  const [ingredientHistory, setIngredientHistory] = useState<IngredientHistory[]>([
+  const [ingredientHistory, setIngredientHistory] = useState([
     { name: 'eggs', lastUsed: '2 days ago' },
     { name: 'butter', lastUsed: '3 days ago' },
     { name: 'flour', lastUsed: '1 week ago' },
     { name: 'chicken', lastUsed: '2 weeks ago' },
   ]);
 
-  const addIngredient = (ingredient: string) => {
+  const addIngredient = (ingredient) => {
     if (ingredient && !selectedIngredients.includes(ingredient.toLowerCase())) {
       setSelectedIngredients([...selectedIngredients, ingredient.toLowerCase()]);
       setIngredientInput('');
     }
   };
 
-  const removeIngredient = (ingredient: string) => {
+  const removeIngredient = (ingredient) => {
     setSelectedIngredients(selectedIngredients.filter(i => i !== ingredient));
   };
 
-  const removeFromHistory = (ingredient: string) => {
+  const removeFromHistory = (ingredient) => {
     setIngredientHistory(ingredientHistory.filter(i => i.name !== ingredient));
   };
 
@@ -44,7 +39,8 @@ function RecipeSearch() {
       state: { 
         recipeName: 'Search Results',
         nextPage: 'search-results',
-        filters: { selectedIngredients, minTime, maxTime, minDishes, maxDishes }
+        filters: { selectedIngredients, minTime, maxTime, minDishes, maxDishes },
+        fromPage: 'recipe-search'
       } 
     });
   };

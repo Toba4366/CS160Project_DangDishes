@@ -1,22 +1,25 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Timeline.css';
 
-interface TimelineTask {
-  name: string;
-  start: number;
-  end: number;
-  color: string;
-  steps?: { time: number; label: string }[];
-}
-
 function Timeline() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recipeName, recipeData } = location.state || {};
+  const { recipeName, recipeData, fromPage } = location.state || {};
+
+  const handleBack = () => {
+    if (fromPage === 'mise-en-place') {
+      navigate('/mise-en-place', { 
+        state: { recipeName, recipeData },
+        replace: false
+      });
+    } else {
+      navigate(-1);
+    }
+  };
 
   // Mock timeline data - in a real app, this would be generated from the recipe
   const totalTime = recipeData?.time || 15;
-  const tasks: TimelineTask[] = [
+  const tasks = [
     {
       name: 'Toast bread',
       start: 0,
@@ -58,7 +61,7 @@ function Timeline() {
         </div>
         <div className="header-right">
           <span className="recipe-info">{totalTime} min · {recipeData?.dishes || 3} dishes</span>
-          <button className="back-button" onClick={() => navigate(-1)}>
+          <button className="back-button" onClick={handleBack}>
             ← Back
           </button>
         </div>

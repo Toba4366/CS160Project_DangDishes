@@ -2,19 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './History.css';
 
-interface Recipe {
-  id: string;
-  name: string;
-  time: number;
-  dishes: number;
-  lastCooked: string;
-}
-
 function History() {
   const navigate = useNavigate();
 
   // Mock history data - in a real app, this would come from local storage or a database
-  const [history] = useState<Recipe[]>([
+  const [history] = useState([
     { id: '1', name: 'Fried Egg on Toast', time: 15, dishes: 3, lastCooked: '2 days ago' },
     { id: '2', name: 'Scrambled Eggs', time: 10, dishes: 2, lastCooked: '3 days ago' },
     { id: '3', name: 'Spaghetti Carbonara', time: 25, dishes: 4, lastCooked: '1 week ago' },
@@ -22,12 +14,12 @@ function History() {
     { id: '5', name: 'Chicken Stir Fry', time: 30, dishes: 5, lastCooked: '2 weeks ago' },
   ]);
 
-  const handleRecipeClick = (recipe: Recipe) => {
+  const handleRecipeClick = (recipe) => {
     navigate('/mise-en-place', { 
       state: { 
         recipeName: recipe.name,
         recipeData: recipe,
-        isFromHistory: true
+        fromPage: 'history'
       } 
     });
   };
