@@ -1,0 +1,100 @@
+:root {
+  /* Light green color matching Figma design */
+  --primary-green: #90ee90;
+  
+  /* Handwritten-style font similar to Comic Sans but more legible */
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: white;
+  color: black;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: black;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+a {
+  font-weight: 500;
+  color: var(--primary-green);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+button {
+  border-radius: 8px;
+  border: none;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+.back-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  opacity: 0.8;
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+/* Override system dark mode - keep white background always */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: white;
+    color: black;
+  }
+}

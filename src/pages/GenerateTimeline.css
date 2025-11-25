@@ -1,0 +1,87 @@
+.generate-timeline {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.back-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.back-button:hover {
+  opacity: 0.8;
+}
+
+.generate-timeline h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: black;
+}
+
+.generate-timeline h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+  color: black;
+}
+
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipe-input {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.recipe-textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 15px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.submit-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  align-self: flex-start;
+  min-width: 120px;
+}
+
+.submit-button:hover {
+  opacity: 0.8;
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

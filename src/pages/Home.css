@@ -1,0 +1,45 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.home h1 {
+  font-size: 48px;
+  color: black;
+  margin-bottom: 60px;
+  text-align: center;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.main-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 25px 40px;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+  width: 100%;
+}
+
+.main-button:hover {
+  transform: translateY(-3px);
+  opacity: 0.9;
+}
+
+.main-button:active {
+  transform: translateY(-1px);
+}

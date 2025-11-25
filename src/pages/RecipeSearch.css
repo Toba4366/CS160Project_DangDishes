@@ -1,0 +1,209 @@
+.recipe-search {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.recipe-search h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: black;
+}
+
+.description {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.ingredients-section {
+  margin-bottom: 40px;
+}
+
+.ingredients-section h2,
+.filters-section h2 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: black;
+}
+
+.ingredients-section h3 {
+  font-size: 18px;
+  margin: 20px 0 10px;
+  color: black;
+}
+
+.ingredient-input-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ingredient-input {
+  flex: 1;
+  padding: 12px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+}
+
+.add-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.add-button:hover {
+  opacity: 0.8;
+}
+
+.selected-ingredients {
+  margin-bottom: 20px;
+}
+
+.ingredient-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ingredient-tag {
+  background: var(--primary-green);
+  color: black;
+  padding: 8px 12px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ingredient-tag button {
+  background: none;
+  border: none;
+  color: black;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.ingredient-name {
+  font-weight: bold;
+  cursor: pointer;
+  color: black;
+}
+
+.ingredient-name:hover {
+  color: var(--primary-green);
+}
+
+.last-used {
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.history-item:hover .delete-button {
+  opacity: 1;
+}
+
+.filters-section {
+  margin-bottom: 40px;
+}
+
+.filter-group {
+  margin-bottom: 20px;
+}
+
+.filter-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: black;
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-with-buttons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.input-with-buttons button {
+  background: var(--primary-green);
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.input-with-buttons button:hover {
+  opacity: 0.8;
+}
+
+.input-with-buttons input {
+  width: 70px;
+  padding: 8px;
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.search-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  float: right;
+}
+
+.search-button:hover {
+  opacity: 0.8;
+}

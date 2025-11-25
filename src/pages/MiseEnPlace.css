@@ -1,0 +1,91 @@
+.mise-en-place {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.recipe-header h1 {
+  font-size: 24px;
+  color: black;
+  margin-bottom: 5px;
+}
+
+.recipe-name {
+  color: var(--primary-green);
+  font-size: 28px;
+}
+
+.recipe-meta {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.mise-en-place h2 {
+  font-size: 32px;
+  color: black;
+  margin-bottom: 10px;
+}
+
+.description {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.checklist-section {
+  margin-bottom: 30px;
+}
+
+.checklist-section h3 {
+  font-size: 24px;
+  color: black;
+  margin-bottom: 15px;
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.checkbox-item input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: var(--primary-green);
+}
+
+.checkbox-item span {
+  color: black;
+}
+
+.checkbox-item span.checked {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.view-timeline-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: block;
+  margin: 40px auto 0;
+}
+
+.view-timeline-button:hover {
+  opacity: 0.8;
+}

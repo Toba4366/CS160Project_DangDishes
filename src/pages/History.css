@@ -1,0 +1,63 @@
+.history {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.history h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: black;
+}
+
+.description {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipe-button {
+  background: var(--primary-green);
+  border: none;
+  padding: 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s;
+}
+
+.recipe-button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.recipe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+
+.recipe-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: black;
+  flex: 1;
+}
+
+.last-cooked {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+.recipe-details {
+  font-size: 14px;
+  color: #333;
+}
