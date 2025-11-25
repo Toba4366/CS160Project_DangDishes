@@ -1,16 +1,54 @@
 # 🍽️ Dish It Out!
 
-A modern cooking assistant application built with React, TypeScript, and Vite.
+A modern cooking assistant application built with React, TypeScript, and Vite. Dish It Out! helps you cook efficiently with optimized timelines, ingredient management, and step-by-step guidance.
 
 ## Overview
 
-Dish It Out! is your personal cooking assistant for discovering and organizing delicious recipes. Keep track of your culinary journey with an intuitive interface and helpful features.
+Dish It Out! is your personal cooking assistant that generates interactive cooking timelines to help you prepare multiple components of a dish simultaneously. Track your cooking history, search for recipes, and get organized with mise en place checklists.
 
 ## Features
 
-- 🏠 **Home**: Welcome page with feature highlights
-- 🔍 **Search**: Search for recipes by ingredients, cuisine, or dietary preferences
-- 📅 **Timeline**: Track your cooking history and favorite dishes
+### 🏠 **Home**
+Simple, clean interface with three main actions:
+- Enter a new recipe (URL or text)
+- Search for recipes by ingredients
+- View your cooking history
+
+### 📝 **Generate Timeline**
+- Input recipes via URL or plain text
+- Automatic timeline generation
+- Loading screen with helpful cooking tips
+
+### 🔍 **Recipe Search**
+- Search by ingredients with history tracking
+- Filter by cooking time and number of dishes
+- Save frequently used ingredients
+
+### 📊 **Interactive Timeline** (Landscape View)
+- Color-coded task visualization
+- Parallel task scheduling
+- Step-by-step markers
+- Time optimization for multitasking
+
+### ✅ **Mise en Place**
+- Checklist for tools and ingredients
+- Visual preparation tracking
+- Direct link to cooking timeline
+
+### 📚 **Cooking History**
+- All previously cooked recipes
+- Ordered by most recent
+- Quick access to repeat recipes
+
+## Design
+
+Based on Figma prototype with:
+- Clean white background
+- Light green (#90ee90) accent color
+- Handwritten-style font for friendly feel
+- Mobile-first with landscape timeline support
+
+[View Figma Prototype](https://www.figma.com/design/ULJ34BDXHVxAQzLE3Up1Ov/Trenton-Eugene-O-Bannon-s-team-library?node-id=3313-3&m=dev&t=DlJIXM2TyR13CMku-1)
 
 ## Tech Stack
 
@@ -58,17 +96,23 @@ npm run dev
 
 ```
 src/
-├── components/     # Reusable UI components
-│   ├── Layout.tsx
-│   └── Navbar.tsx
-├── pages/         # Page components
-│   ├── Home.tsx
-│   ├── Search.tsx
-│   └── Timeline.tsx
-├── assets/        # Static assets
-├── App.tsx        # Main app component with routing
-└── main.tsx       # Application entry point
+├── pages/              # Page components
+│   ├── Home.tsx        # Main landing with 3 buttons
+│   ├── GenerateTimeline.tsx  # Recipe input
+│   ├── RecipeSearch.tsx      # Ingredient search
+│   ├── SearchResults.tsx     # Recipe results
+│   ├── History.tsx           # Cooking history
+│   ├── MiseEnPlace.tsx       # Prep checklist
+│   ├── Timeline.tsx          # Interactive timeline
+│   └── Loading.tsx           # Loading screen
+├── assets/            # Static assets
+├── App.tsx            # Main app with routing
+└── main.tsx           # Application entry point
 ```
+
+## Development Team
+
+CS160 Group Project - Dang Dishes
 
 ## License
 
