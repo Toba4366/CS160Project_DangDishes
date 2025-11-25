@@ -18,7 +18,7 @@ const cookingTips = [
 function Loading() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { recipeName, nextPage } = location.state || {};
+  const { recipeName, nextPage, recipeData, fromPage } = location.state || {};
   
   const randomTip = cookingTips[Math.floor(Math.random() * cookingTips.length)];
 
@@ -26,14 +26,16 @@ function Loading() {
     // Simulate loading time
     const timer = setTimeout(() => {
       if (nextPage === 'timeline') {
-        navigate('/timeline', { state: { recipeName } });
+        navigate('/timeline', { state: { recipeName, recipeData, fromPage }, replace: true });
+      } else if (nextPage === 'search-results') {
+        navigate('/search-results', { state: { recipeName, recipeData, fromPage }, replace: true });
       } else {
-        navigate('/mise-en-place', { state: { recipeName } });
+        navigate('/mise-en-place', { state: { recipeName, recipeData, fromPage }, replace: true });
       }
     }, 2500); // 2.5 seconds loading time
 
     return () => clearTimeout(timer);
-  }, [navigate, nextPage, recipeName]);
+  }, [navigate, nextPage, recipeName, recipeData, fromPage]);
 
   return (
     <div className="loading">
