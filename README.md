@@ -1,6 +1,6 @@
 # 🍽️ Dish It Out!
 
-A modern cooking assistant application built with React, TypeScript, and Vite. Dish It Out! helps you cook efficiently with optimized timelines, ingredient management, and step-by-step guidance.
+A modern cooking assistant application built with React, JavaScript, and Vite. Dish It Out! helps you cook efficiently with optimized timelines, ingredient management, and step-by-step guidance.
 
 ## Overview
 
@@ -53,7 +53,7 @@ Based on Figma prototype with:
 ## Tech Stack
 
 - **React 19** - Modern UI framework
-- **TypeScript** - Type-safe development
+- **JavaScript (JSX)** - Modern JavaScript with JSX syntax
 - **Vite** - Fast build tool and dev server
 - **React Router** - Client-side routing
 - **CSS** - Custom styling with responsive design
@@ -97,17 +97,17 @@ npm run dev
 ```
 src/
 ├── pages/              # Page components
-│   ├── Home.tsx        # Main landing with 3 buttons
-│   ├── GenerateTimeline.tsx  # Recipe input
-│   ├── RecipeSearch.tsx      # Ingredient search
-│   ├── SearchResults.tsx     # Recipe results
-│   ├── History.tsx           # Cooking history
-│   ├── MiseEnPlace.tsx       # Prep checklist
-│   ├── Timeline.tsx          # Interactive timeline
-│   └── Loading.tsx           # Loading screen
+│   ├── Home.jsx        # Main landing with 3 buttons
+│   ├── GenerateTimeline.jsx  # Recipe input
+│   ├── RecipeSearch.jsx      # Ingredient search
+│   ├── SearchResults.jsx     # Recipe results
+│   ├── History.jsx           # Cooking history
+│   ├── MiseEnPlace.jsx       # Prep checklist
+│   ├── Timeline.jsx          # Interactive timeline
+│   └── Loading.jsx           # Loading screen
 ├── assets/            # Static assets
-├── App.tsx            # Main app with routing
-└── main.tsx           # Application entry point
+├── App.jsx            # Main app with routing
+└── main.jsx           # Application entry point
 ```
 
 ## Development Team
