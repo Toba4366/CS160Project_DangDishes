@@ -40,7 +40,7 @@ function GenerateTimeline() {
     setUrlError(error);
     
     if (!error) {
-      navigate('/loading', { state: { recipeName: 'Recipe from URL', recipeData: urlInput } });
+      navigate('/loading', { state: { recipeName: 'Custom Recipe', recipeData: urlInput } });
     }
   };
 
