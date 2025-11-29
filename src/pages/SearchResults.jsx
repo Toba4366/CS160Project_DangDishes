@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { recipeService } from '../services/recipeService';
 import './SearchResults.css';
 
 function SearchResults() {
@@ -7,21 +8,48 @@ function SearchResults() {
   const location = useLocation();
   const { filters } = location.state || {};
 
-  // Mock recipe data - in a real app, this would come from an API
-  const [recipes] = useState([
-    { id: '1', name: 'Scrambled Eggs', time: 10, dishes: 2, isHistory: true },
-    { id: '2', name: 'Fried Egg on Toast', time: 15, dishes: 3, isHistory: true },
-    { id: '3', name: 'Classic Omelette', time: 12, dishes: 2, isHistory: false },
-    { id: '4', name: 'Egg Fried Rice', time: 25, dishes: 4, isHistory: false },
-    { id: '5', name: 'Poached Eggs Benedict', time: 30, dishes: 5, isHistory: false },
-  ]);
-
+  const [webRecipes, setWebRecipes] = useState([]);
+  const [historyRecipes, setHistoryRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const historyRecipes = recipes.filter(r => r.isHistory);
-  const webRecipes = recipes.filter(r => !r.isHistory);
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const handleRecipeClick = (recipe) => {
+        // Fetch both web results and history in parallel
+        const [webData, historyData] = await Promise.all([
+          recipeService.searchRecipes(
+            filters?.selectedIngredients || ['chicken'],
+            { maxResults: 10 }
+          ),
+          recipeService.getHistory()
+        ]);
+
+        setWebRecipes(webData.recipes || []);
+        setHistoryRecipes(historyData.recipes || []);
+      } catch (err) {
+        console.error('Failed to fetch recipes:', err);
+        setError('Failed to load recipes. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, [filters]);
+
+  const handleRecipeClick = async (recipe) => {
+    // Save to history when clicked
+    try {
+      await recipeService.addToHistory(recipe);
+    } catch (err) {
+      console.error('Failed to add to history:', err);
+    }
+
     navigate('/loading', { 
       state: { 
         recipeName: recipe.name,
@@ -31,6 +59,30 @@ function SearchResults() {
       } 
     });
   };
+
+  if (loading) {
+    return (
+      <div className="search-results">
+        <button className="back-button" onClick={() => navigate('/recipe-search')}>
+          ← Back
+        </button>
+        <h1>Loading recipes...</h1>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="search-results">
+        <button className="back-button" onClick={() => navigate('/recipe-search')}>
+          ← Back
+        </button>
+        <h1>Error</h1>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
+      </div>
+    );
+  }
 
   return (
     <div className="search-results">
@@ -85,13 +137,19 @@ function SearchResults() {
                 className="recipe-button"
                 onClick={() => handleRecipeClick(recipe)}
               >
-                <div className="recipe-name">{recipe.name}</div>
+                <div className="recipe-name">{recipe.name || 'Untitled Recipe'}</div>
                 <div className="recipe-details">
                   {recipe.time} min · {recipe.dishes} dishes
                 </div>
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {webRecipes.length === 0 && historyRecipes.length === 0 && (
+        <div className="recipe-section">
+          <p>No recipes found. Try different ingredients!</p>
         </div>
       )}
     </div>

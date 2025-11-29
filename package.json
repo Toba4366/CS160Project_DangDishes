@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend": "cd backend && source venv/bin/activate && python app.py",
+    "start:backend": "cd backend && source venv/bin/activate && python app.py",
+    "start:frontend": "vite"
   },
   "dependencies": {
     "react": "^19.2.0",

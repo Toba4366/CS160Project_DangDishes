@@ -18,9 +18,17 @@ const cookingTips = [
 function Loading() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { recipeName, nextPage, recipeData, fromPage } = location.state || {};
+  const { recipeName, nextPage, recipeData, fromPage, filters } = location.state || {};
   
   const randomTip = cookingTips[Math.floor(Math.random() * cookingTips.length)];
+
+  // Determine loading message based on next page
+  const getLoadingMessage = () => {
+    if (nextPage === 'timeline') return 'Generating Timeline';
+    if (nextPage === 'search-results') return 'Searching Recipes';
+    if (nextPage === 'mise-en-place') return 'Preparing Checklist';
+    return 'Loading';
+  };
 
   useEffect(() => {
     // Simulate loading time
@@ -28,18 +36,18 @@ function Loading() {
       if (nextPage === 'timeline') {
         navigate('/timeline', { state: { recipeName, recipeData, fromPage }, replace: true });
       } else if (nextPage === 'search-results') {
-        navigate('/search-results', { state: { recipeName, recipeData, fromPage }, replace: true });
+        navigate('/search-results', { state: { recipeName, recipeData, fromPage, filters }, replace: true });
       } else {
         navigate('/mise-en-place', { state: { recipeName, recipeData, fromPage }, replace: true });
       }
     }, 2500); // 2.5 seconds loading time
 
     return () => clearTimeout(timer);
-  }, [navigate, nextPage, recipeName, recipeData, fromPage]);
+  }, [navigate, nextPage, recipeName, recipeData, fromPage, filters]);
 
   return (
     <div className="loading">
-      <h1>Loading Timeline</h1>
+      <h1>{getLoadingMessage()}</h1>
       <div className="spinner"></div>
       <p className="cooking-tip">{randomTip}</p>
     </div>

@@ -177,6 +177,10 @@
   cursor: pointer;
   font-size: 18px;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .input-with-buttons button:hover {
