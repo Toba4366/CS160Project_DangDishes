@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Timeline.css';
 
@@ -5,6 +6,7 @@ function Timeline() {
   const navigate = useNavigate();
   const location = useLocation();
   const { recipeName, recipeData, fromPage } = location.state || {};
+  const [completedSteps, setCompletedSteps] = useState(new Set());
 
   const handleBack = () => {
     if (fromPage === 'mise-en-place') {
@@ -25,7 +27,7 @@ function Timeline() {
       start: 0,
       end: 5,
       color: '#ff6b6b',
-      steps: [{ time: 5, label: 'Remove toast' }]
+      steps: [{ time: 5, label: 'Remove toast', id: 'step-1' }]
     },
     {
       name: 'Cook egg',
@@ -33,10 +35,10 @@ function Timeline() {
       end: 8,
       color: '#ffa500',
       steps: [
-        { time: 1, label: 'Heat pan' },
-        { time: 3, label: 'Add oil' },
-        { time: 5, label: 'Crack egg' },
-        { time: 8, label: 'Flip egg' }
+        { time: 1, label: 'Heat pan', id: 'step-2' },
+        { time: 3, label: 'Add oil', id: 'step-3' },
+        { time: 5, label: 'Crack egg', id: 'step-4' },
+        { time: 8, label: 'Flip egg', id: 'step-5' }
       ]
     },
     {
@@ -45,15 +47,32 @@ function Timeline() {
       end: 15,
       color: '#4169e1',
       steps: [
-        { time: 7, label: 'Wash pan' },
-        { time: 10, label: 'Wash plate' },
-        { time: 12, label: 'Wash utensils' }
+        { time: 7, label: 'Wash pan', id: 'step-6' },
+        { time: 10, label: 'Wash plate', id: 'step-7' },
+        { time: 12, label: 'Wash utensils', id: 'step-8' }
       ]
     }
   ];
 
+  const toggleStep = (stepId) => {
+    setCompletedSteps(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(stepId)) {
+        newSet.delete(stepId);
+      } else {
+        newSet.add(stepId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="timeline-page">
+      {/* Orientation hint for mobile */}
+      <div className="orientation-hint">
+        Rotate your device to landscape mode for the best timeline viewing experience
+      </div>
+
       <div className="timeline-header">
         <div className="header-left">
           <span className="now-viewing">Now viewing: </span>
@@ -66,6 +85,10 @@ function Timeline() {
           </button>
         </div>
       </div>
+
+      <div className="timeline-instructions">
+          <p>Tap on step markers to mark them as complete</p>
+        </div>
 
       <div className="timeline-container">
         <div className="timeline-chart">
@@ -100,12 +123,16 @@ function Timeline() {
                   {task.steps?.map((step, stepIndex) => (
                     <div
                       key={stepIndex}
-                      className="task-step"
+                      className={`task-step ${completedSteps.has(step.id) ? 'completed' : ''}`}
                       style={{ left: `${((step.time - task.start) / (task.end - task.start)) * 100}%` }}
-                      title={step.label}
+                      onClick={() => toggleStep(step.id)}
+                      title={`${step.label} - Click to mark ${completedSteps.has(step.id) ? 'incomplete' : 'complete'}`}
                     >
                       <div className="step-dot"></div>
-                      <div className="step-label">{step.label}</div>
+                      <div className="step-label">
+                        {completedSteps.has(step.id) && <span className="checkmark">✓ </span>}
+                        {step.label}
+                      </div>
                     </div>
                   ))}
                 </div>
