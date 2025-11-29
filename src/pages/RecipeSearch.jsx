@@ -20,8 +20,8 @@ function RecipeSearch() {
   ]);
 
   const addIngredient = (ingredient) => {
-    if (ingredient && !selectedIngredients.includes(ingredient.toLowerCase())) {
-      setSelectedIngredients([...selectedIngredients, ingredient.toLowerCase()]);
+    if (ingredient && !selectedIngredients.includes(ingredient.toLowerCase().trim())) {
+      setSelectedIngredients([...selectedIngredients, ingredient.toLowerCase().trim()]);
       setIngredientInput('');
     }
   };
@@ -35,51 +35,70 @@ function RecipeSearch() {
   };
 
   const handleSearch = () => {
-    navigate('/loading', { 
-      state: { 
+    if (selectedIngredients.length === 0) {
+      alert('Please select at least one ingredient to search');
+      return;
+    }
+
+    navigate('/loading', {
+      state: {
         recipeName: 'Search Results',
         nextPage: 'search-results',
         filters: { selectedIngredients, minTime, maxTime, minDishes, maxDishes },
         fromPage: 'recipe-search'
-      } 
+      }
     });
   };
 
   return (
     <div className="recipe-search">
-      <button className="back-button" onClick={() => navigate('/')}>
-        ← Back
-      </button>
-
       <h1>Recipe Search</h1>
       <p className="description">
         Select ingredients and set your preferences to find the perfect recipe!
       </p>
 
       <div className="ingredients-section">
-        <h2>Type Ingredients</h2>
+        <div className="section-header">
+          <h2>Ingredients</h2>
+        </div>
+
         <div className="ingredient-input-container">
           <input
             type="text"
             className="ingredient-input"
-            placeholder="Type ingredients"
+            placeholder="Type ingredient name (e.g., chicken, rice, tomatoes)..."
             value={ingredientInput}
             onChange={(e) => setIngredientInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addIngredient(ingredientInput)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addIngredient(ingredientInput);
+              }
+            }}
           />
-          <button className="add-button" onClick={() => addIngredient(ingredientInput)}>
+          <button
+            className="add-button"
+            onClick={() => addIngredient(ingredientInput)}
+            disabled={!ingredientInput.trim()}
+          >
             Add
           </button>
         </div>
 
         {selectedIngredients.length > 0 && (
           <div className="selected-ingredients">
-            <h3>Selected:</h3>
+            <h3>Selected Ingredients ({selectedIngredients.length})</h3>
             <div className="ingredient-tags">
               {selectedIngredients.map(ingredient => (
                 <span key={ingredient} className="ingredient-tag">
                   {ingredient}
-                  <button onClick={() => removeIngredient(ingredient)}>×</button>
+                  <button
+                    onClick={() => removeIngredient(ingredient)}
+                    title="Remove ingredient"
+                    aria-label={`Remove ${ingredient}`}
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
             </div>
@@ -87,21 +106,33 @@ function RecipeSearch() {
         )}
 
         <div className="ingredient-history">
-          <h3>Recent Ingredients</h3>
+          <div className="history-header">
+            <h3>Recent Ingredients</h3>
+          </div>
+          <p className="section-hint">Click an ingredient to add it to your search</p>
           <div className="history-list">
             {ingredientHistory.map(item => (
-              <div key={item.name} className="history-item">
-                <span 
-                  className="ingredient-name"
-                  onClick={() => addIngredient(item.name)}
-                >
+              <div
+                key={item.name}
+                className="history-item"
+                onClick={() => addIngredient(item.name)}
+                style={{ cursor: 'pointer' }}
+                title={`Add ${item.name} to search`}
+              >
+                <span className="ingredient-name-btn">
                   {item.name}
                 </span>
+
                 <span className="last-used">
-                  {item.lastUsed}
-                  <button 
+                  Last used: {item.lastUsed}
+                  <button
                     className="delete-button"
-                    onClick={() => removeFromHistory(item.name)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromHistory(item.name);
+                    }}
+                    title="Remove from history"
+                    aria-label={`Remove ${item.name} from history`}
                   >
                     🗑️
                   </button>
@@ -113,66 +144,125 @@ function RecipeSearch() {
       </div>
 
       <div className="filters-section">
-        <h2>Filters</h2>
-        
+        <div className="section-header">
+          <h2>Filters</h2>
+        </div>
+
         <div className="filter-group">
-          <label>Time (minutes)</label>
+          <label>
+            Cooking Time (minutes)
+            <span className="filter-hint">How long you want to spend cooking</span>
+          </label>
           <div className="range-inputs">
             <div className="input-with-buttons">
-              <button onClick={() => setMinTime(Math.max(0, minTime - 1))}>−</button>
+              <button
+                onClick={() => setMinTime(Math.max(0, minTime - 5))}
+                aria-label="Decrease minimum time"
+              >
+                −
+              </button>
               <input
                 type="number"
                 value={minTime}
-                onChange={(e) => setMinTime(Number(e.target.value))}
+                onChange={(e) => setMinTime(Math.max(0, Number(e.target.value)))}
                 min="0"
+                aria-label="Minimum cooking time"
               />
-              <button onClick={() => setMinTime(minTime + 1)}>+</button>
+              <button
+                onClick={() => setMinTime(Math.min(maxTime, minTime + 5))}
+                aria-label="Increase minimum time"
+              >
+                +
+              </button>
             </div>
-            <span>to</span>
+            <span className="range-separator">to</span>
             <div className="input-with-buttons">
-              <button onClick={() => setMaxTime(Math.max(minTime, maxTime - 1))}>−</button>
+              <button
+                onClick={() => setMaxTime(Math.max(minTime, maxTime - 5))}
+                aria-label="Decrease maximum time"
+              >
+                −
+              </button>
               <input
                 type="number"
                 value={maxTime}
-                onChange={(e) => setMaxTime(Number(e.target.value))}
+                onChange={(e) => setMaxTime(Math.max(minTime, Number(e.target.value)))}
                 min={minTime}
+                aria-label="Maximum cooking time"
               />
-              <button onClick={() => setMaxTime(maxTime + 1)}>+</button>
+              <button
+                onClick={() => setMaxTime(maxTime + 5)}
+                aria-label="Increase maximum time"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
 
         <div className="filter-group">
-          <label>Number of Dishes</label>
+          <label>
+            Number of Dishes to Clean
+            <span className="filter-hint">Fewer dishes = easier cleanup!</span>
+          </label>
           <div className="range-inputs">
             <div className="input-with-buttons">
-              <button onClick={() => setMinDishes(Math.max(1, minDishes - 1))}>−</button>
+              <button
+                onClick={() => setMinDishes(Math.max(1, minDishes - 1))}
+                aria-label="Decrease minimum dishes"
+              >
+                −
+              </button>
               <input
                 type="number"
                 value={minDishes}
-                onChange={(e) => setMinDishes(Number(e.target.value))}
+                onChange={(e) => setMinDishes(Math.max(1, Number(e.target.value)))}
                 min="1"
+                aria-label="Minimum number of dishes"
               />
-              <button onClick={() => setMinDishes(minDishes + 1)}>+</button>
+              <button
+                onClick={() => setMinDishes(Math.min(maxDishes, minDishes + 1))}
+                aria-label="Increase minimum dishes"
+              >
+                +
+              </button>
             </div>
-            <span>to</span>
+            <span className="range-separator">to</span>
             <div className="input-with-buttons">
-              <button onClick={() => setMaxDishes(Math.max(minDishes, maxDishes - 1))}>−</button>
+              <button
+                onClick={() => setMaxDishes(Math.max(minDishes, maxDishes - 1))}
+                aria-label="Decrease maximum dishes"
+              >
+                −
+              </button>
               <input
                 type="number"
                 value={maxDishes}
-                onChange={(e) => setMaxDishes(Number(e.target.value))}
+                onChange={(e) => setMaxDishes(Math.max(minDishes, Number(e.target.value)))}
                 min={minDishes}
+                aria-label="Maximum number of dishes"
               />
-              <button onClick={() => setMaxDishes(maxDishes + 1)}>+</button>
+              <button
+                onClick={() => setMaxDishes(maxDishes + 1)}
+                aria-label="Increase maximum dishes"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <button className="search-button" onClick={handleSearch}>
-        Search
+      <button
+        className="search-button"
+        onClick={handleSearch}
+        disabled={selectedIngredients.length === 0}
+      >
+        Search Recipes ({selectedIngredients.length} ingredient{selectedIngredients.length !== 1 ? 's' : ''})
       </button>
+      {selectedIngredients.length === 0 && (
+        <p className="search-hint">Please select at least one ingredient to search</p>
+      )}
     </div>
   );
 }

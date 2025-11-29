@@ -1,6 +1,6 @@
 .recipe-search {
   padding: 20px;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
@@ -14,6 +14,36 @@
   font-size: 16px;
   color: #666;
   margin-bottom: 30px;
+  line-height: 1.5;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.help-icon {
+  cursor: help;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.help-icon:hover {
+  opacity: 1;
+}
+
+.tooltip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 10px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #333;
 }
 
 .ingredients-section {
@@ -23,20 +53,28 @@
 .ingredients-section h2,
 .filters-section h2 {
   font-size: 24px;
-  margin-bottom: 15px;
   color: black;
+  margin: 0;
 }
 
 .ingredients-section h3 {
   font-size: 18px;
-  margin: 20px 0 10px;
+  margin: 0 0 10px 0;
   color: black;
+}
+
+.input-hint,
+.section-hint {
+  font-size: 14px;
+  color: #666;
+  margin: 5px 0 15px 0;
+  font-style: italic;
 }
 
 .ingredient-input-container {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 
 .ingredient-input {
@@ -45,6 +83,12 @@
   font-size: 16px;
   border: 2px solid #ccc;
   border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.ingredient-input:focus {
+  outline: none;
+  border-color: var(--primary-green);
 }
 
 .add-button {
@@ -56,14 +100,25 @@
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
 }
 
-.add-button:hover {
-  opacity: 0.8;
+.add-button:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+.add-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .selected-ingredients {
-  margin-bottom: 20px;
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 2px solid var(--primary-green);
 }
 
 .ingredient-tags {
@@ -80,6 +135,12 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-weight: 500;
+  transition: transform 0.2s;
+}
+
+.ingredient-tag:hover {
+  transform: scale(1.05);
 }
 
 .ingredient-tag button {
@@ -94,6 +155,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s;
+}
+
+.ingredient-tag button:hover {
+  transform: scale(1.3);
+}
+
+.ingredient-history {
+  margin-top: 25px;
+}
+
+.history-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
 }
 
 .history-list {
@@ -106,18 +184,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  border: 1px solid #ddd;
+  padding: 12px;
+  border: 2px solid #ddd;
   border-radius: 8px;
+  transition: all 0.2s;
+  background: white;
 }
 
-.ingredient-name {
+.history-item:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ingredient-name-btn {
+  background: none;
+  border: none;
   font-weight: bold;
   cursor: pointer;
   color: black;
+  font-size: 16px;
+  padding: 0;
+  text-align: left;
+  transition: color 0.2s;
 }
 
-.ingredient-name:hover {
+.ingredient-name-btn:hover {
   color: var(--primary-green);
 }
 
@@ -126,6 +217,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  font-size: 14px;
 }
 
 .delete-button {
@@ -134,32 +226,53 @@
   cursor: pointer;
   font-size: 18px;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
+  padding: 4px;
 }
 
 .history-item:hover .delete-button {
-  opacity: 1;
+  opacity: 0.6;
+}
+
+.delete-button:hover {
+  opacity: 1 !important;
+  transform: scale(1.2);
 }
 
 .filters-section {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .filter-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .filter-group label {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   font-weight: bold;
   margin-bottom: 10px;
   color: black;
+}
+
+.filter-hint {
+  font-size: 14px;
+  font-weight: normal;
+  color: #666;
+  font-style: italic;
 }
 
 .range-inputs {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.range-separator {
+  color: #666;
+  font-weight: bold;
 }
 
 .input-with-buttons {
@@ -171,25 +284,41 @@
 .input-with-buttons button {
   background: var(--primary-green);
   border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 5px;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .input-with-buttons button:hover {
-  opacity: 0.8;
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+.input-with-buttons button:active {
+  transform: scale(0.95);
 }
 
 .input-with-buttons input {
-  width: 70px;
+  width: 80px;
   padding: 8px;
   text-align: center;
   border: 2px solid #ccc;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 16px;
+  font-weight: bold;
+  transition: border-color 0.2s;
+}
+
+.input-with-buttons input:focus {
+  outline: none;
+  border-color: var(--primary-green);
 }
 
 .search-button {
@@ -201,9 +330,70 @@
   font-size: 20px;
   font-weight: bold;
   cursor: pointer;
-  float: right;
+  display: block;
+  margin: 0 auto;
+  transition: opacity 0.2s, transform 0.2s;
 }
 
-.search-button:hover {
-  opacity: 0.8;
+.search-button:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+.search-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-hint {
+  text-align: center;
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .recipe-search {
+    padding: 15px;
+  }
+
+  .recipe-search h1 {
+    font-size: 26px;
+  }
+
+  .section-header h2 {
+    font-size: 20px;
+  }
+
+  .ingredient-input-container {
+    flex-direction: column;
+  }
+
+  .add-button {
+    width: 100%;
+  }
+
+  .range-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .input-with-buttons {
+    justify-content: center;
+  }
+
+  .range-separator {
+    text-align: center;
+  }
+
+  .search-button {
+    width: 100%;
+    font-size: 18px;
+  }
 }
