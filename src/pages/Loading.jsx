@@ -44,7 +44,6 @@ function Loading() {
           // Preserve needsSaving flag when merging details
           finalRecipeData = { ...recipeData, ...details, needsSaving: recipeData.needsSaving };
           setEnhancedRecipeData(finalRecipeData);
-          console.log('Fetched details:', details);
         } catch (err) {
           console.error('Failed to fetch recipe details:', err);
           // Continue with original data if fetch fails
