@@ -186,35 +186,113 @@ function GenerateTimeline() {
     return '';
   };
 
-  // TODO (JOSH): Convert this to async function and add history tracking
-  // See detailed instructions in header comments!
-  // Key changes needed:
-  // 1. Make function async: const handleUrlSubmit = async () => {
-  // 2. Create properly formatted recipeData object
-  // 3. Call await recipeService.addToHistory(recipeData)
-  // 4. Update navigate() call to pass recipeData and nextPage
-  const handleUrlSubmit = () => {
+  // Helper function to extract recipe name from URL
+  const extractNameFromUrl = (url) => {
+    try {
+      // Extract last part of URL path
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const parts = pathname.split('/').filter(p => p);
+      const lastPart = parts[parts.length - 1];
+      
+      // Convert kebab-case to Title Case
+      return lastPart
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    } catch (e) {
+      return 'Recipe from URL';
+    }
+  };
+
+  // Helper function to extract recipe name from text (first line or default)
+  const extractNameFromText = (text) => {
+    const lines = text.trim().split('\n').filter(line => line.trim());
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      // If first line looks like a title (short, no numbers), use it
+      if (firstLine.length < 50 && !firstLine.match(/^\d+\./)) {
+        return firstLine;
+      }
+    }
+    return 'Custom Recipe';
+  };
+
+  // Handle URL submission with proper data formatting and history storage
+  const handleUrlSubmit = async () => {
     const error = validateUrl(urlInput);
     setUrlError(error);
     
     if (!error) {
-      // TODO (JOSH): Replace 'urlInput' string with properly formatted recipe object
-      // Should be: recipeData: { id, name, url, time, dishes, source: 'manual', ... }
-      navigate('/loading', { state: { recipeName: 'Custom Recipe', recipeData: urlInput } });
+      // Create properly formatted recipe object
+      const recipeData = {
+        id: `url-${Date.now()}`,
+        name: extractNameFromUrl(urlInput) || 'Recipe from URL',
+        url: urlInput,
+        recipeText: null,
+        time: null,
+        dishes: null,
+        source: 'manual',
+        isHistory: false
+      };
+      
+      // Save to history
+      try {
+        await recipeService.addToHistory(recipeData);
+        console.log('Saved to history:', recipeData.name);
+      } catch (err) {
+        console.error('Failed to save to history:', err);
+        // Continue anyway
+      }
+      
+      // Navigate to loading page with formatted data
+      navigate('/loading', { 
+        state: { 
+          recipeName: recipeData.name,
+          recipeData: recipeData,
+          nextPage: 'mise-en-place',
+          fromPage: 'generate-timeline'
+        } 
+      });
     }
   };
 
-  // TODO (JOSH): Convert this to async function and add history tracking
-  // Same changes as handleUrlSubmit but for text input:
-  // 1. Create recipeData object with recipeText field (not url field)
-  // 2. Call await recipeService.addToHistory(recipeData)
-  // 3. Update navigate() call
-  const handleTextSubmit = () => {
+  // Handle text submission
+  const handleTextSubmit = async () => {
     const error = validateText(textInput);
     setTextError(error);
     
     if (!error) {
-      navigate('/loading', { state: { recipeName: 'Custom Recipe', recipeData: textInput } });
+      // Create properly formatted recipe object
+      const recipeData = {
+        id: `text-${Date.now()}`,
+        name: extractNameFromText(textInput) || 'Custom Recipe',
+        url: null,
+        recipeText: textInput,
+        time: null,
+        dishes: null,
+        source: 'manual',
+        isHistory: false
+      };
+      
+      // Save to history
+      try {
+        await recipeService.addToHistory(recipeData);
+        console.log('Saved to history:', recipeData.name);
+      } catch (err) {
+        console.error('Failed to save to history:', err);
+        // Continue anyway
+      }
+      
+      // Navigate to loading page with formatted data
+      navigate('/loading', { 
+        state: { 
+          recipeName: recipeData.name,
+          recipeData: recipeData,
+          nextPage: 'mise-en-place',
+          fromPage: 'generate-timeline'
+        } 
+      });
     }
   };
 

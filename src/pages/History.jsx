@@ -86,15 +86,58 @@ import './History.css';
 function History() {
   const navigate = useNavigate();
 
-  // TODO (JOSH): Replace this mock data with real API call to recipeService.getHistory()
-  // See detailed instructions in comments above!
-  const [history] = useState([
-    { id: '1', name: 'Fried Egg on Toast', time: 15, dishes: 3, lastCooked: '2 days ago' },
-    { id: '2', name: 'Scrambled Eggs', time: 10, dishes: 2, lastCooked: '3 days ago' },
-    { id: '3', name: 'Spaghetti Carbonara', time: 25, dishes: 4, lastCooked: '1 week ago' },
-    { id: '4', name: 'Grilled Cheese Sandwich', time: 10, dishes: 2, lastCooked: '1 week ago' },
-    { id: '5', name: 'Chicken Stir Fry', time: 30, dishes: 5, lastCooked: '2 weeks ago' },
-  ]);
+  // Real state with loading and error handling
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Format lastCooked timestamps to human-readable format
+  const formatLastCooked = (isoString) => {
+    if (!isoString) return 'Unknown';
+    
+    try {
+      const date = new Date(isoString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Unknown';
+      }
+      
+      const now = new Date();
+      const diffMs = now - date;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7);
+        return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+      }
+      const months = Math.floor(diffDays / 30);
+      return `${months} month${months > 1 ? 's' : ''} ago`;
+    } catch (e) {
+      return 'Unknown';
+    }
+  };
+
+  // Fetch history on component mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await recipeService.getHistory();
+        setHistory(data.recipes || []);
+      } catch (err) {
+        console.error('Failed to fetch history:', err);
+        setError('Failed to load history');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHistory();
+  }, []); // Empty dependency array = run once on mount
 
   const handleRecipeClick = (recipe) => {
     navigate('/mise-en-place', { 
@@ -105,6 +148,46 @@ function History() {
       } 
     });
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="history">
+        <button className="back-button" onClick={() => navigate('/')}>
+          ← Back
+        </button>
+        <h1>Cooking History</h1>
+        <p className="description">Loading history...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="history">
+        <button className="back-button" onClick={() => navigate('/')}>
+          ← Back
+        </button>
+        <h1>Cooking History</h1>
+        <p className="description">Error: {error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (history.length === 0) {
+    return (
+      <div className="history">
+        <button className="back-button" onClick={() => navigate('/')}>
+          ← Back
+        </button>
+        <h1>Cooking History</h1>
+        <p className="description">No recipes cooked yet! Start cooking to build your history.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="history">
@@ -124,10 +207,10 @@ function History() {
           >
             <div className="recipe-header">
               <div className="recipe-name">{recipe.name}</div>
-              <div className="last-cooked">{recipe.lastCooked}</div>
+              <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
             </div>
             <div className="recipe-details">
-              {recipe.time} min · {recipe.dishes} dishes
+              {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Servings not set'}
             </div>
           </button>
         ))}
