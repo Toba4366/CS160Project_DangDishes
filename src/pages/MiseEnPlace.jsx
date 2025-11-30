@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import recipeService from '../services/recipeService';
+import { recipeService } from '../services/recipeService';
 import './MiseEnPlace.css';
 
 function MiseEnPlace() {
