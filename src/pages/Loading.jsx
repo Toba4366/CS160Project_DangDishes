@@ -41,7 +41,8 @@ function Loading() {
         try {
           console.log('Fetching recipe details for URL:', recipeData.url);
           const details = await recipeService.getRecipeDetails(recipeData.url);
-          finalRecipeData = { ...recipeData, ...details };
+          // Preserve needsSaving flag when merging details
+          finalRecipeData = { ...recipeData, ...details, needsSaving: recipeData.needsSaving };
           setEnhancedRecipeData(finalRecipeData);
           console.log('Fetched details:', details);
         } catch (err) {
