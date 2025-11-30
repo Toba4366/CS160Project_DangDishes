@@ -113,33 +113,105 @@ def scrape_allrecipes(ingredient):
 def scrape_recipe_details(url):
     """
     Scrape detailed information from a recipe page
-    This is a placeholder for future implementation
+    Extracts ingredients, tools, and instructions
     """
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
     
     try:
+        time.sleep(0.5)  # Be respectful
         response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Extract detailed recipe data
+        print(f"Scraping details from: {url}")
+        
+        # Extract ingredients
+        ingredients = []
+        
+        # Method 1: Look for ingredient list items
+        ingredient_elements = soup.select('li.mntl-structured-ingredients__list-item')
+        if ingredient_elements:
+            for elem in ingredient_elements:
+                # Get the full ingredient text
+                text = elem.get_text(strip=True)
+                if text and len(text) > 1:
+                    ingredients.append(text)
+        
+        # Method 2: Try different selectors
+        if not ingredients:
+            ingredient_elements = soup.select('[data-ingredient-name="true"]')
+            for elem in ingredient_elements:
+                text = elem.get_text(strip=True)
+                if text:
+                    ingredients.append(text)
+        
+        # Method 3: Look for any list with ingredient-related classes
+        if not ingredients:
+            ingredient_elements = soup.find_all(['li', 'p'], class_=lambda x: x and 'ingredient' in x.lower())
+            for elem in ingredient_elements:
+                text = elem.get_text(strip=True)
+                if text and len(text) > 2:
+                    ingredients.append(text)
+        
+        # Extract tools from ingredients (common kitchen tools)
+        common_tools = [
+            'pan', 'pot', 'bowl', 'spatula', 'spoon', 'knife', 'cutting board',
+            'whisk', 'mixer', 'oven', 'stove', 'blender', 'food processor',
+            'baking sheet', 'measuring cup', 'measuring spoon', 'colander',
+            'strainer', 'grater', 'peeler', 'tongs', 'ladle'
+        ]
+        
+        tools = []
+        recipe_text = soup.get_text().lower()
+        
+        for tool in common_tools:
+            if tool in recipe_text and tool not in [t.lower() for t in tools]:
+                tools.append(tool.title())
+        
+        # Extract instructions
+        instructions = []
+        instruction_elements = soup.select('li.mntl-sc-block-group--LI, ol li, .recipe-directions li')
+        for elem in instruction_elements:
+            text = elem.get_text(strip=True)
+            if text and len(text) > 10:
+                instructions.append(text)
+        
+        # Extract times
+        prep_time = None
+        cook_time = None
+        total_time = None
+        servings = None
+        
+        # Look for time elements
+        time_elements = soup.find_all(['div', 'span'], class_=lambda x: x and 'time' in str(x).lower())
+        for elem in time_elements:
+            text = elem.get_text(strip=True).lower()
+            if 'prep' in text:
+                prep_time = text
+            elif 'cook' in text:
+                cook_time = text
+            elif 'total' in text:
+                total_time = text
+        
         recipe_details = {
-            'ingredients': [],
-            'instructions': [],
-            'prepTime': None,
-            'cookTime': None,
-            'totalTime': None,
-            'servings': None
+            'ingredients': ingredients[:20] if ingredients else [],  # Limit to 20
+            'tools': tools[:10] if tools else [],  # Limit to 10
+            'instructions': instructions[:30] if instructions else [],  # Limit to 30
+            'prepTime': prep_time,
+            'cookTime': cook_time,
+            'totalTime': total_time,
+            'servings': servings
         }
         
-        # Add scraping logic for recipe details here
-        # This would need to be customized based on AllRecipes' current HTML structure
-        
+        print(f"Extracted {len(ingredients)} ingredients, {len(tools)} tools, {len(instructions)} steps")
         return recipe_details
         
     except Exception as e:
         print(f"Error scraping recipe details: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def search_recipes(ingredient, max_results=10):

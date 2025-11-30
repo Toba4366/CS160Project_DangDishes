@@ -20,17 +20,27 @@ function SearchResults() {
         setLoading(true);
         setError(null);
 
+        const searchedIngredients = filters?.selectedIngredients || ['chicken'];
+
         // Fetch both web results and history in parallel
         const [webData, historyData] = await Promise.all([
           recipeService.searchRecipes(
-            filters?.selectedIngredients || ['chicken'],
+            searchedIngredients,
             { maxResults: 10 }
           ),
           recipeService.getHistory()
         ]);
 
         setWebRecipes(webData.recipes || []);
-        setHistoryRecipes(historyData.recipes || []);
+        
+        // Filter history to only show recipes with the searched ingredients
+        const filteredHistory = (historyData.recipes || []).filter(recipe => {
+          const recipeName = recipe.name?.toLowerCase() || '';
+          return searchedIngredients.some(ingredient => 
+            recipeName.includes(ingredient.toLowerCase())
+          );
+        });
+        setHistoryRecipes(filteredHistory);
       } catch (err) {
         console.error('Failed to fetch recipes:', err);
         setError('Failed to load recipes. Please try again.');
@@ -50,11 +60,23 @@ function SearchResults() {
       console.error('Failed to add to history:', err);
     }
 
+    // Fetch full recipe details if we have a URL
+    let fullRecipeData = recipe;
+    if (recipe.url) {
+      try {
+        const details = await recipeService.getRecipeDetails(recipe.url);
+        fullRecipeData = { ...recipe, ...details };
+      } catch (err) {
+        console.error('Failed to fetch recipe details:', err);
+        // Continue with basic data if details fetch fails
+      }
+    }
+
     navigate('/loading', { 
       state: { 
         recipeName: recipe.name,
         nextPage: 'mise-en-place',
-        recipeData: recipe,
+        recipeData: fullRecipeData,
         fromPage: 'search-results'
       } 
     });

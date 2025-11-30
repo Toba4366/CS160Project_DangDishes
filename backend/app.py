@@ -137,16 +137,36 @@ async def clear_recipe_history():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/recipe/{recipe_id}")
-async def get_recipe_details(recipe_id: str):
+class RecipeDetailsRequest(BaseModel):
+    url: str
+
+@app.post("/api/recipe/details")
+async def get_recipe_details(request: RecipeDetailsRequest):
     """
-    Get detailed information for a specific recipe
-    This is a placeholder for future implementation
+    Get detailed information for a specific recipe by URL
+    Returns ingredients, tools, instructions, etc.
     """
-    return {
-        "message": "Recipe details endpoint - to be implemented",
-        "recipeId": recipe_id
-    }
+    try:
+        if not request.url:
+            raise HTTPException(status_code=400, detail="Recipe URL is required")
+        
+        details = scrape_recipe_details(request.url)
+        
+        if details is None:
+            # Return reasonable defaults if scraping fails
+            return {
+                "ingredients": [],
+                "tools": [],
+                "instructions": [],
+                "prepTime": None,
+                "cookTime": None,
+                "servings": None
+            }
+        
+        return details
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

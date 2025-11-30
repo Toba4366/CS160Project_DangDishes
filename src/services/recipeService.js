@@ -163,10 +163,23 @@ export const recipeService = {
 
   /**
    * Get detailed information for a specific recipe
-   * @param {string} recipeId - The recipe ID
-   * @returns {Promise<Object>} Recipe details
+   * @param {string} recipeUrl - The recipe URL to scrape
+   * @returns {Promise<Object>} Recipe details with ingredients and tools
    */
-  getRecipeDetails: async (recipeId) => {
-    return api.get(`/api/recipe/${recipeId}`);
+  getRecipeDetails: async (recipeUrl) => {
+    const hasBackend = await checkBackendHealth();
+    
+    if (hasBackend) {
+      try {
+        return await api.post('/api/recipe/details', { url: recipeUrl });
+      } catch (error) {
+        console.log('Backend not available for recipe details');
+        // Return mock data structure if backend fails
+        return { ingredients: [], tools: [] };
+      }
+    } else {
+      // Return empty arrays if no backend
+      return { ingredients: [], tools: [] };
+    }
   },
 };

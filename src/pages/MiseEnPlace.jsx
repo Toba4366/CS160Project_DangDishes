@@ -7,20 +7,36 @@ function MiseEnPlace() {
   const location = useLocation();
   const { recipeName, recipeData, fromPage } = location.state || {};
 
-  // Mock data - in a real app, this would come from the recipe data
-  const [tools, setTools] = useState([
+  // Use recipe data if available, otherwise use mock data
+  const defaultTools = [
     { id: 't1', name: 'Frying pan', checked: false },
     { id: 't2', name: 'Spatula', checked: false },
     { id: 't3', name: 'Toaster', checked: false },
     { id: 't4', name: 'Plate', checked: false },
-  ]);
+  ];
 
-  const [ingredients, setIngredients] = useState([
+  const defaultIngredients = [
     { id: 'i1', name: '2 eggs', checked: false },
     { id: 'i2', name: '2 slices of bread', checked: false },
     { id: 'i3', name: '1 tbs butter', checked: false },
     { id: 'i4', name: 'Salt and pepper', checked: false },
-  ]);
+  ];
+
+  // Extract tools and ingredients from recipeData if available
+  const recipeTools = recipeData?.tools?.map((tool, idx) => ({
+    id: `t${idx}`,
+    name: typeof tool === 'string' ? tool : tool.name,
+    checked: false
+  })) || defaultTools;
+
+  const recipeIngredients = recipeData?.ingredients?.map((ing, idx) => ({
+    id: `i${idx}`,
+    name: typeof ing === 'string' ? ing : ing.name,
+    checked: false
+  })) || defaultIngredients;
+
+  const [tools, setTools] = useState(recipeTools);
+  const [ingredients, setIngredients] = useState(recipeIngredients);
 
   const toggleTool = (id) => {
     setTools(tools.map(tool => 
