@@ -1,6 +1,157 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { recipeService } from '../services/recipeService';
 import './GenerateTimeline.css';
+
+/**
+ * JOSH'S TASK: Add Data Formatting and History Storage
+ * 
+ * CURRENT STATE:
+ * ==============
+ * - This page accepts recipe URL or text input
+ * - It validates input and navigates to /loading page
+ * - BUT it doesn't properly format recipe data or save to history
+ * 
+ * WHAT NEEDS TO HAPPEN:
+ * ====================
+ * 
+ * PART A: DATA REFORMATTING
+ * -------------------------
+ * When user submits URL or text, you need to create a proper recipe object:
+ * 
+ * Recipe Object Structure:
+ * {
+ *   id: string (generate with: `url-${Date.now()}` or `text-${Date.now()}`),
+ *   name: string (extract from URL or ask user, or use "Custom Recipe"),
+ *   url: string (the URL if URL input, or null if text input),
+ *   recipeText: string (the text if text input, or null if URL input),
+ *   time: number (default to null or ask user),
+ *   dishes: number (default to null or ask user),
+ *   source: 'manual' (to distinguish from web-scraped recipes),
+ *   isHistory: false (will be set to true when added to history)
+ * }
+ * 
+ * PART B: SAVE TO HISTORY AFTER TIMELINE GENERATION
+ * -------------------------------------------------
+ * There are TWO approaches you can take:
+ * 
+ * OPTION 1 (Easier): Save immediately when user submits
+ *   - Call recipeService.addToHistory(recipeObject) right after validation
+ *   - Then navigate to loading page
+ *   - Pro: Simple, happens right away
+ *   - Con: User hasn't actually cooked it yet
+ * 
+ * OPTION 2 (Better UX): Save after user views the timeline
+ *   - Pass recipe data through navigation state
+ *   - In Timeline.jsx, add a "Mark as Cooked" or "Save to History" button
+ *   - When clicked, call recipeService.addToHistory(recipeData)
+ *   - Pro: Only saves recipes that user actually used
+ *   - Con: Requires changes to Timeline.jsx too
+ * 
+ * RECOMMENDED: Use OPTION 1 for now (simpler)
+ * 
+ * HOW TO IMPLEMENT:
+ * =================
+ * 
+ * STEP 1: Import recipeService (already done above)
+ * 
+ * STEP 2: Update handleUrlSubmit:
+ *   const handleUrlSubmit = async () => {
+ *     const error = validateUrl(urlInput);
+ *     setUrlError(error);
+ *     
+ *     if (!error) {
+ *       // Create properly formatted recipe object
+ *       const recipeData = {
+ *         id: `url-${Date.now()}`,
+ *         name: extractNameFromUrl(urlInput) || 'Recipe from URL', // You create this helper
+ *         url: urlInput,
+ *         recipeText: null,
+ *         time: null, // Could add optional fields for user to enter
+ *         dishes: null,
+ *         source: 'manual',
+ *         isHistory: false
+ *       };
+ *       
+ *       // Save to history
+ *       try {
+ *         await recipeService.addToHistory(recipeData);
+ *         console.log('Saved to history:', recipeData.name);
+ *       } catch (err) {
+ *         console.error('Failed to save to history:', err);
+ *         // Continue anyway - don't block user if history fails
+ *       }
+ *       
+ *       // Navigate to loading page with formatted data
+ *       navigate('/loading', { 
+ *         state: { 
+ *           recipeName: recipeData.name,
+ *           recipeData: recipeData,
+ *           nextPage: 'mise-en-place',
+ *           fromPage: 'generate-timeline'
+ *         } 
+ *       });
+ *     }
+ *   };
+ * 
+ * STEP 3: Update handleTextSubmit (similar to above):
+ *   - Create recipe object with recipeText field instead of url
+ *   - id: `text-${Date.now()}`
+ *   - name: 'Custom Recipe' or extract first line of text
+ *   - Save to history same way
+ *   - Navigate with formatted data
+ * 
+ * STEP 4: Create helper function to extract name from URL:
+ *   const extractNameFromUrl = (url) => {
+ *     try {
+ *       // Extract last part of URL path
+ *       const urlObj = new URL(url);
+ *       const pathname = urlObj.pathname;
+ *       const parts = pathname.split('/').filter(p => p);
+ *       const lastPart = parts[parts.length - 1];
+ *       
+ *       // Convert kebab-case to Title Case
+ *       return lastPart
+ *         .split('-')
+ *         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+ *         .join(' ');
+ *     } catch (e) {
+ *       return 'Custom Recipe';
+ *     }
+ *   };
+ * 
+ * BONUS (Optional): Add time/dishes input fields
+ * ----------------------------------------------
+ * You could add optional input fields for cooking time and number of dishes:
+ * 
+ * const [timeInput, setTimeInput] = useState('');
+ * const [dishesInput, setDishesInput] = useState('');
+ * 
+ * <input 
+ *   type="number" 
+ *   placeholder="Cooking time (minutes)" 
+ *   value={timeInput}
+ *   onChange={(e) => setTimeInput(e.target.value)}
+ * />
+ * 
+ * Then use: time: timeInput ? parseInt(timeInput) : null
+ * 
+ * TESTING:
+ * ========
+ * 1. Run backend: cd backend && python app.py
+ * 2. Run frontend: npm run dev
+ * 3. Submit a URL on GenerateTimeline page
+ * 4. Check browser console for "Saved to history" message
+ * 5. Go to History page - your recipe should appear!
+ * 6. Check backend terminal - should show POST /api/history request
+ * 
+ * REFERENCE FILES:
+ * ================
+ * - src/services/recipeService.js - API functions
+ * - src/pages/SearchResults.jsx - Example of saving to history (line ~40)
+ * - backend/app.py - History API endpoints
+ * - backend/database.py - History storage logic
+ */
 
 function GenerateTimeline() {
   const navigate = useNavigate();
@@ -35,15 +186,29 @@ function GenerateTimeline() {
     return '';
   };
 
+  // TODO (JOSH): Convert this to async function and add history tracking
+  // See detailed instructions in header comments!
+  // Key changes needed:
+  // 1. Make function async: const handleUrlSubmit = async () => {
+  // 2. Create properly formatted recipeData object
+  // 3. Call await recipeService.addToHistory(recipeData)
+  // 4. Update navigate() call to pass recipeData and nextPage
   const handleUrlSubmit = () => {
     const error = validateUrl(urlInput);
     setUrlError(error);
     
     if (!error) {
+      // TODO (JOSH): Replace 'urlInput' string with properly formatted recipe object
+      // Should be: recipeData: { id, name, url, time, dishes, source: 'manual', ... }
       navigate('/loading', { state: { recipeName: 'Custom Recipe', recipeData: urlInput } });
     }
   };
 
+  // TODO (JOSH): Convert this to async function and add history tracking
+  // Same changes as handleUrlSubmit but for text input:
+  // 1. Create recipeData object with recipeText field (not url field)
+  // 2. Call await recipeService.addToHistory(recipeData)
+  // 3. Update navigate() call
   const handleTextSubmit = () => {
     const error = validateText(textInput);
     setTextError(error);
