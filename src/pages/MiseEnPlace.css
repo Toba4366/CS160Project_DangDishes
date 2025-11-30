@@ -73,6 +73,38 @@
   color: #999;
 }
 
+.save-recipe-button {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: block;
+  margin: 30px auto 0;
+  transition: all 0.3s ease;
+}
+
+.save-recipe-button:hover:not(:disabled) {
+  background: #1976d2;
+}
+
+.save-recipe-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.save-recipe-button.saved {
+  background: #4caf50;
+  cursor: default;
+}
+
+.save-recipe-button.saved:hover {
+  background: #4caf50;
+}
+
 .view-timeline-button {
   background: var(--primary-green);
   color: black;
@@ -83,7 +115,7 @@
   font-weight: bold;
   cursor: pointer;
   display: block;
-  margin: 40px auto 0;
+  margin: 20px auto 0;
 }
 
 .view-timeline-button:hover {
