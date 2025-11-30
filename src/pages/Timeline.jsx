@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { recipeService } from '../services/recipeService';
 import './Timeline.css';
 
 function Timeline() {
@@ -7,6 +8,8 @@ function Timeline() {
   const location = useLocation();
   const { recipeName, recipeData, fromPage } = location.state || {};
   const [completedSteps, setCompletedSteps] = useState(new Set());
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleBack = () => {
     if (fromPage === 'mise-en-place') {
@@ -16,6 +19,22 @@ function Timeline() {
       });
     } else {
       navigate(-1);
+    }
+  };
+
+  const handleSaveToHistory = async () => {
+    if (!recipeData || saved) return;
+    
+    try {
+      setSaving(true);
+      await recipeService.addToHistory(recipeData);
+      setSaved(true);
+      console.log('Saved to history:', recipeData.name);
+    } catch (err) {
+      console.error('Failed to save to history:', err);
+      alert('Failed to save to history. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -80,6 +99,15 @@ function Timeline() {
         </div>
         <div className="header-right">
           <span className="recipe-info">{totalTime} min · {recipeData?.dishes || 3} dishes</span>
+          {recipeData?.needsSaving && (
+            <button 
+              className={`save-button ${saved ? 'saved' : ''}`}
+              onClick={handleSaveToHistory}
+              disabled={saving || saved}
+            >
+              {saved ? '✓ Saved' : saving ? 'Saving...' : 'Save to History'}
+            </button>
+          )}
           <button className="back-button" onClick={handleBack}>
             ← Back
           </button>

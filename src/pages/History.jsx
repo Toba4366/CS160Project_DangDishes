@@ -85,16 +85,44 @@ import './History.css';
 
 function History() {
   const navigate = useNavigate();
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // TODO (JOSH): Replace this mock data with real API call to recipeService.getHistory()
-  // See detailed instructions in comments above!
-  const [history] = useState([
-    { id: '1', name: 'Fried Egg on Toast', time: 15, dishes: 3, lastCooked: '2 days ago' },
-    { id: '2', name: 'Scrambled Eggs', time: 10, dishes: 2, lastCooked: '3 days ago' },
-    { id: '3', name: 'Spaghetti Carbonara', time: 25, dishes: 4, lastCooked: '1 week ago' },
-    { id: '4', name: 'Grilled Cheese Sandwich', time: 10, dishes: 2, lastCooked: '1 week ago' },
-    { id: '5', name: 'Chicken Stir Fry', time: 30, dishes: 5, lastCooked: '2 weeks ago' },
-  ]);
+  const formatLastCooked = (isoString) => {
+    if (!isoString) return 'Unknown';
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
+  };
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await recipeService.getHistory();
+        setHistory(data.recipes || []);
+      } catch (err) {
+        console.error('Failed to fetch history:', err);
+        setError('Failed to load history');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, []);
+
+  // Separate uploaded recipes from web recipes
+  const uploadedRecipes = history.filter(r => r.source === 'manual');
+  const webRecipes = history.filter(r => r.source !== 'manual');
 
   const handleRecipeClick = (recipe) => {
     navigate('/mise-en-place', { 
@@ -106,6 +134,31 @@ function History() {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="history">
+        <button className="back-button" onClick={() => navigate('/')}>
+          ← Back
+        </button>
+        <h1>Cooking History</h1>
+        <p className="description">Loading your cooking history...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="history">
+        <button className="back-button" onClick={() => navigate('/')}>
+          ← Back
+        </button>
+        <h1>Cooking History</h1>
+        <p className="description error">{error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
+      </div>
+    );
+  }
+
   return (
     <div className="history">
       <button className="back-button" onClick={() => navigate('/')}>
@@ -115,23 +168,57 @@ function History() {
       <h1>Cooking History</h1>
       <p className="description">View all the recipes you've made before</p>
 
-      <div className="history-list">
-        {history.map(recipe => (
-          <button 
-            key={recipe.id} 
-            className="recipe-button"
-            onClick={() => handleRecipeClick(recipe)}
-          >
-            <div className="recipe-header">
-              <div className="recipe-name">{recipe.name}</div>
-              <div className="last-cooked">{recipe.lastCooked}</div>
-            </div>
-            <div className="recipe-details">
-              {recipe.time} min · {recipe.dishes} dishes
-            </div>
-          </button>
-        ))}
-      </div>
+      {history.length === 0 && (
+        <div className="empty-state">
+          <p>No recipes cooked yet! Start by searching for recipes or generating a timeline.</p>
+        </div>
+      )}
+
+      {uploadedRecipes.length > 0 && (
+        <div className="history-section">
+          <h2>Your Uploaded Recipes</h2>
+          <div className="history-list">
+            {uploadedRecipes.map(recipe => (
+              <button 
+                key={recipe.id} 
+                className="recipe-button"
+                onClick={() => handleRecipeClick(recipe)}
+              >
+                <div className="recipe-header">
+                  <div className="recipe-name">{recipe.name}</div>
+                  <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
+                </div>
+                <div className="recipe-details">
+                  {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {webRecipes.length > 0 && (
+        <div className="history-section">
+          <h2>Recipes from the Web</h2>
+          <div className="history-list">
+            {webRecipes.map(recipe => (
+              <button 
+                key={recipe.id} 
+                className="recipe-button"
+                onClick={() => handleRecipeClick(recipe)}
+              >
+                <div className="recipe-header">
+                  <div className="recipe-name">{recipe.name}</div>
+                  <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
+                </div>
+                <div className="recipe-details">
+                  {recipe.time} min · {recipe.dishes} dishes
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

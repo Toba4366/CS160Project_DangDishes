@@ -61,3 +61,26 @@
   font-size: 14px;
   color: #333;
 }
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+}
+
+.description.error {
+  color: #ff6b6b;
+}
+
+.history-section {
+  margin-bottom: 40px;
+}
+
+.history-section h2 {
+  font-size: 22px;
+  color: black;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--primary-green);
+}

@@ -151,6 +151,31 @@
   font-size: 14px;
 }
 
+.optional-fields {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.optional-input {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.optional-input:focus {
+  outline: none;
+  border-color: var(--primary-green);
+}
+
+.optional-input::placeholder {
+  color: #999;
+  font-size: 13px;
+}
+
 .submit-button {
   background: var(--primary-green);
   color: black;

@@ -157,6 +157,8 @@ function GenerateTimeline() {
   const navigate = useNavigate();
   const [urlInput, setUrlInput] = useState('');
   const [textInput, setTextInput] = useState('');
+  const [timeInput, setTimeInput] = useState('');
+  const [dishesInput, setDishesInput] = useState('');
   const [urlError, setUrlError] = useState('');
   const [textError, setTextError] = useState('');
 
@@ -186,35 +188,80 @@ function GenerateTimeline() {
     return '';
   };
 
-  // TODO (JOSH): Convert this to async function and add history tracking
-  // See detailed instructions in header comments!
-  // Key changes needed:
-  // 1. Make function async: const handleUrlSubmit = async () => {
-  // 2. Create properly formatted recipeData object
-  // 3. Call await recipeService.addToHistory(recipeData)
-  // 4. Update navigate() call to pass recipeData and nextPage
+  const extractNameFromUrl = (url) => {
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const parts = pathname.split('/').filter(p => p);
+      const lastPart = parts[parts.length - 1];
+      
+      return lastPart
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    } catch (e) {
+      return 'Custom Recipe';
+    }
+  };
+
+  const extractNameFromText = (text) => {
+    const firstLine = text.trim().split('\n')[0];
+    return firstLine.length > 50 ? 'Custom Recipe' : firstLine || 'Custom Recipe';
+  };
+
   const handleUrlSubmit = () => {
     const error = validateUrl(urlInput);
     setUrlError(error);
     
     if (!error) {
-      // TODO (JOSH): Replace 'urlInput' string with properly formatted recipe object
-      // Should be: recipeData: { id, name, url, time, dishes, source: 'manual', ... }
-      navigate('/loading', { state: { recipeName: 'Custom Recipe', recipeData: urlInput } });
+      const recipeData = {
+        id: `url-${Date.now()}`,
+        name: extractNameFromUrl(urlInput),
+        url: urlInput,
+        recipeText: null,
+        time: timeInput ? parseInt(timeInput) : null,
+        dishes: dishesInput ? parseInt(dishesInput) : null,
+        source: 'manual',
+        isHistory: false,
+        needsSaving: true
+      };
+      
+      navigate('/loading', { 
+        state: { 
+          recipeName: recipeData.name,
+          recipeData: recipeData,
+          nextPage: 'mise-en-place',
+          fromPage: 'generate-timeline'
+        } 
+      });
     }
   };
 
-  // TODO (JOSH): Convert this to async function and add history tracking
-  // Same changes as handleUrlSubmit but for text input:
-  // 1. Create recipeData object with recipeText field (not url field)
-  // 2. Call await recipeService.addToHistory(recipeData)
-  // 3. Update navigate() call
   const handleTextSubmit = () => {
     const error = validateText(textInput);
     setTextError(error);
     
     if (!error) {
-      navigate('/loading', { state: { recipeName: 'Custom Recipe', recipeData: textInput } });
+      const recipeData = {
+        id: `text-${Date.now()}`,
+        name: extractNameFromText(textInput),
+        url: null,
+        recipeText: textInput,
+        time: timeInput ? parseInt(timeInput) : null,
+        dishes: dishesInput ? parseInt(dishesInput) : null,
+        source: 'manual',
+        isHistory: false,
+        needsSaving: true
+      };
+      
+      navigate('/loading', { 
+        state: { 
+          recipeName: recipeData.name,
+          recipeData: recipeData,
+          nextPage: 'mise-en-place',
+          fromPage: 'generate-timeline'
+        } 
+      });
     }
   };
 
@@ -259,6 +306,24 @@ function GenerateTimeline() {
                 {urlError}
               </div>
             )}
+          </div>
+          <div className="optional-fields">
+            <input
+              type="number"
+              placeholder="Time (minutes)"
+              className="optional-input"
+              value={timeInput}
+              onChange={(e) => setTimeInput(e.target.value)}
+              min="1"
+            />
+            <input
+              type="number"
+              placeholder="# of dishes"
+              className="optional-input"
+              value={dishesInput}
+              onChange={(e) => setDishesInput(e.target.value)}
+              min="1"
+            />
           </div>
           <button 
             className="submit-button" 
