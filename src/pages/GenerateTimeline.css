@@ -151,10 +151,40 @@
   font-size: 14px;
 }
 
+.optional-toggle {
+  background: transparent;
+  border: 2px dashed #ccc;
+  color: #666;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+
+.optional-toggle:hover {
+  border-color: var(--primary-green);
+  color: black;
+}
+
 .optional-fields {
   display: flex;
   gap: 10px;
   margin-top: 10px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .optional-input {

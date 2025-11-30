@@ -157,8 +157,12 @@ function GenerateTimeline() {
   const navigate = useNavigate();
   const [urlInput, setUrlInput] = useState('');
   const [textInput, setTextInput] = useState('');
-  const [timeInput, setTimeInput] = useState('');
-  const [dishesInput, setDishesInput] = useState('');
+  const [urlTimeInput, setUrlTimeInput] = useState('');
+  const [urlDishesInput, setUrlDishesInput] = useState('');
+  const [textTimeInput, setTextTimeInput] = useState('');
+  const [textDishesInput, setTextDishesInput] = useState('');
+  const [showUrlOptional, setShowUrlOptional] = useState(false);
+  const [showTextOptional, setShowTextOptional] = useState(false);
   const [urlError, setUrlError] = useState('');
   const [textError, setTextError] = useState('');
 
@@ -209,6 +213,64 @@ function GenerateTimeline() {
     return firstLine.length > 50 ? 'Custom Recipe' : firstLine || 'Custom Recipe';
   };
 
+  const parseRecipeText = (text) => {
+    const lines = text.split('\n').filter(line => line.trim());
+    const ingredients = [];
+    const tools = [];
+    
+    let inIngredientsSection = false;
+    let inToolsSection = false;
+    
+    for (const line of lines) {
+      const lowerLine = line.toLowerCase().trim();
+      
+      // Check for section headers
+      if (lowerLine.includes('ingredient')) {
+        inIngredientsSection = true;
+        inToolsSection = false;
+        continue;
+      }
+      if (lowerLine.includes('tool') || lowerLine.includes('equipment') || lowerLine.includes('instruction') || lowerLine.includes('direction') || lowerLine.includes('step')) {
+        inIngredientsSection = false;
+        if (lowerLine.includes('tool') || lowerLine.includes('equipment')) {
+          inToolsSection = true;
+        }
+        continue;
+      }
+      
+      // Extract ingredients (lines starting with -, *, •, or numbers)
+      if (inIngredientsSection && /^[-*•\d]/.test(line.trim())) {
+        const cleaned = line.trim().replace(/^[-*•\d.)]\s*/, '');
+        if (cleaned.length > 2) {
+          ingredients.push(cleaned);
+        }
+      }
+      
+      // Extract tools
+      if (inToolsSection && /^[-*•\d]/.test(line.trim())) {
+        const cleaned = line.trim().replace(/^[-*•\d.)]\s*/, '');
+        if (cleaned.length > 2) {
+          tools.push(cleaned);
+        }
+      }
+    }
+    
+    // If no explicit sections found, look for ingredient patterns in first half of text
+    if (ingredients.length === 0) {
+      const firstHalf = lines.slice(0, Math.ceil(lines.length / 2));
+      for (const line of firstHalf) {
+        if (/^[-*•]/.test(line.trim())) {
+          const cleaned = line.trim().replace(/^[-*•]\s*/, '');
+          if (cleaned.length > 2 && /\d/.test(cleaned)) { // Likely ingredient if has numbers
+            ingredients.push(cleaned);
+          }
+        }
+      }
+    }
+    
+    return { ingredients, tools };
+  };
+
   const handleUrlSubmit = () => {
     const error = validateUrl(urlInput);
     setUrlError(error);
@@ -219,8 +281,10 @@ function GenerateTimeline() {
         name: extractNameFromUrl(urlInput),
         url: urlInput,
         recipeText: null,
-        time: timeInput ? parseInt(timeInput) : null,
-        dishes: dishesInput ? parseInt(dishesInput) : null,
+        ingredients: [], // Will be fetched by scraper
+        tools: [],
+        time: urlTimeInput ? parseInt(urlTimeInput) : null,
+        dishes: urlDishesInput ? parseInt(urlDishesInput) : null,
         source: 'manual',
         isHistory: false,
         needsSaving: true
@@ -242,13 +306,17 @@ function GenerateTimeline() {
     setTextError(error);
     
     if (!error) {
+      const { ingredients, tools } = parseRecipeText(textInput);
+      
       const recipeData = {
         id: `text-${Date.now()}`,
         name: extractNameFromText(textInput),
         url: null,
         recipeText: textInput,
-        time: timeInput ? parseInt(timeInput) : null,
-        dishes: dishesInput ? parseInt(dishesInput) : null,
+        ingredients: ingredients,
+        tools: tools,
+        time: textTimeInput ? parseInt(textTimeInput) : null,
+        dishes: textDishesInput ? parseInt(textDishesInput) : null,
         source: 'manual',
         isHistory: false,
         needsSaving: true
@@ -307,24 +375,33 @@ function GenerateTimeline() {
               </div>
             )}
           </div>
-          <div className="optional-fields">
-            <input
-              type="number"
-              placeholder="Time (minutes)"
-              className="optional-input"
-              value={timeInput}
-              onChange={(e) => setTimeInput(e.target.value)}
-              min="1"
-            />
-            <input
-              type="number"
-              placeholder="# of dishes"
-              className="optional-input"
-              value={dishesInput}
-              onChange={(e) => setDishesInput(e.target.value)}
-              min="1"
-            />
-          </div>
+          <button 
+            type="button"
+            className="optional-toggle"
+            onClick={() => setShowUrlOptional(!showUrlOptional)}
+          >
+            {showUrlOptional ? '▼' : '▶'} Optional: Add time and dishes
+          </button>
+          {showUrlOptional && (
+            <div className="optional-fields">
+              <input
+                type="number"
+                placeholder="Time (minutes)"
+                className="optional-input"
+                value={urlTimeInput}
+                onChange={(e) => setUrlTimeInput(e.target.value)}
+                min="1"
+              />
+              <input
+                type="number"
+                placeholder="# of dishes"
+                className="optional-input"
+                value={urlDishesInput}
+                onChange={(e) => setUrlDishesInput(e.target.value)}
+                min="1"
+              />
+            </div>
+          )}
           <button 
             className="submit-button" 
             onClick={handleUrlSubmit}
@@ -366,6 +443,33 @@ Example Instructions:
               </div>
             )}
           </div>
+          <button 
+            type="button"
+            className="optional-toggle"
+            onClick={() => setShowTextOptional(!showTextOptional)}
+          >
+            {showTextOptional ? '▼' : '▶'} Optional: Add time and dishes
+          </button>
+          {showTextOptional && (
+            <div className="optional-fields">
+              <input
+                type="number"
+                placeholder="Time (minutes)"
+                className="optional-input"
+                value={textTimeInput}
+                onChange={(e) => setTextTimeInput(e.target.value)}
+                min="1"
+              />
+              <input
+                type="number"
+                placeholder="# of dishes"
+                className="optional-input"
+                value={textDishesInput}
+                onChange={(e) => setTextDishesInput(e.target.value)}
+                min="1"
+              />
+            </div>
+          )}
           <button 
             className="submit-button" 
             onClick={handleTextSubmit}
