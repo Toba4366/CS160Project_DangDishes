@@ -219,56 +219,67 @@ function GenerateTimeline() {
     const tools = [];
     
     let inIngredientsSection = false;
-    let inToolsSection = false;
+    let inInstructionsSection = false;
     
-    for (const line of lines) {
-      const lowerLine = line.toLowerCase().trim();
+    // Common cooking verbs that indicate instruction lines
+    const cookingVerbs = ['cook', 'add', 'stir', 'heat', 'boil', 'cut', 'chop', 'mince', 'season', 'remove', 'bring', 'reserve'];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      const lowerLine = line.toLowerCase();
       
-      // Check for section headers
-      if (lowerLine.includes('ingredient')) {
-        inIngredientsSection = true;
-        inToolsSection = false;
-        continue;
-      }
-      if (lowerLine.includes('tool') || lowerLine.includes('equipment') || lowerLine.includes('instruction') || lowerLine.includes('direction') || lowerLine.includes('step')) {
+      // Detect instructions section (lines that start with verbs or are numbered steps)
+      if (cookingVerbs.some(verb => lowerLine.startsWith(verb)) || /^\d+\./.test(line)) {
+        inInstructionsSection = true;
         inIngredientsSection = false;
-        if (lowerLine.includes('tool') || lowerLine.includes('equipment')) {
-          inToolsSection = true;
-        }
+        
+        // Extract tools from instruction lines
+        const toolKeywords = ['pot', 'pan', 'bowl', 'spoon', 'knife', 'board', 'mixer', 'blender', 'oven', 'stove'];
+        toolKeywords.forEach(tool => {
+          if (lowerLine.includes(tool) && !tools.some(t => t.toLowerCase().includes(tool))) {
+            // Capitalize first letter
+            tools.push(tool.charAt(0).toUpperCase() + tool.slice(1));
+          }
+        });
         continue;
       }
       
-      // Extract ingredients (lines starting with -, *, •, or numbers)
-      if (inIngredientsSection && /^[-*•\d]/.test(line.trim())) {
-        const cleaned = line.trim().replace(/^[-*•\d.)]\s*/, '');
-        if (cleaned.length > 2) {
-          ingredients.push(cleaned);
-        }
+      // Section headers ending with colon (e.g., "Freaksta:", "Chicken:")
+      if (line.endsWith(':') || lowerLine.includes('ingredient')) {
+        inIngredientsSection = true;
+        inInstructionsSection = false;
+        // Don't add the header itself
+        continue;
       }
       
-      // Extract tools
-      if (inToolsSection && /^[-*•\d]/.test(line.trim())) {
-        const cleaned = line.trim().replace(/^[-*•\d.)]\s*/, '');
-        if (cleaned.length > 2) {
-          tools.push(cleaned);
+      // Stop treating as ingredients when we hit instructions
+      if (inInstructionsSection) {
+        continue;
+      }
+      
+      // In ingredients section: add non-empty lines that aren't too long
+      if (inIngredientsSection && line.length > 2 && line.length < 100) {
+        ingredients.push(line);
+      }
+      
+      // Before any section detected, assume first lines are ingredients
+      if (!inIngredientsSection && !inInstructionsSection && i < lines.length / 2) {
+        // If line is short and doesn't start with a verb, likely an ingredient
+        if (line.length < 100 && !cookingVerbs.some(verb => lowerLine.startsWith(verb))) {
+          inIngredientsSection = true;
+          ingredients.push(line);
         }
       }
     }
     
-    // If no explicit sections found, look for ingredient patterns in first half of text
-    if (ingredients.length === 0) {
-      const firstHalf = lines.slice(0, Math.ceil(lines.length / 2));
-      for (const line of firstHalf) {
-        if (/^[-*•]/.test(line.trim())) {
-          const cleaned = line.trim().replace(/^[-*•]\s*/, '');
-          if (cleaned.length > 2 && /\d/.test(cleaned)) { // Likely ingredient if has numbers
-            ingredients.push(cleaned);
-          }
-        }
-      }
-    }
+    // Remove duplicates and empty entries
+    const uniqueIngredients = [...new Set(ingredients.filter(i => i.length > 2))];
+    const uniqueTools = [...new Set(tools)];
     
-    return { ingredients, tools };
+    return { 
+      ingredients: uniqueIngredients.slice(0, 30), // Limit to 30
+      tools: uniqueTools.slice(0, 10) // Limit to 10
+    };
   };
 
   const handleUrlSubmit = () => {
