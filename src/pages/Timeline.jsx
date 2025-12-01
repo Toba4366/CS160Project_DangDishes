@@ -19,40 +19,126 @@ function Timeline() {
     }
   };
 
+  const colors = ['#FF6663', '#9EC1CF', '#FEB144']
+
   // Mock timeline data - in a real app, this would be generated from the recipe
   const totalTime = recipeData?.time || 15;
-  const tasks = [
+  var step_id = 1;
+  var task_id = 0;
+
+  const prepVerbs = ['preheat', 'chop', 'grease', 'soak', 'drain', 'clean', 'mix', 'sift'];
+  const cookingVerbs = ['cook', 'grill', 'saute', 'bake', 'fry', 'toast'];
+  const taskType = ['Prep', 'Cook', 'Clean'];
+
+  var prep_steps = [];
+  var prep_start = 0;
+  var prep_time = 0;
+
+  var cook_steps = [];
+  var cook_start  = 0;
+  var cook_time = 0;
+
+  var clean_steps = [];
+
+  var currTime = 0;
+
+  for (line in recipeData.recipeText) {
+    for (sentence in line.split(".")) {
+      const words = sentence.split(" ")
+
+      var t = recipeData.time / 10; // ?
+      if (words.includes("minutes")) {
+        t = words[words.indexOf("minutes") - 1];
+      }
+
+      step = {time: t, label: sentence, id: `step-${step_id++}`};
+      
+      if (prepVerbs.some(r=> sentence.includes(r))) {
+        prep_steps.push(step);
+        if (prep_start == 0) {
+          prep_start = currTime;
+          prep_time += t;
+        }
+
+      } else if ((cookingVerbs.some(r=> sentence.includes(r)))) {
+        cook_steps.push(step);
+        if (cook_start == 0) {
+          cook_start = currTime;
+          cook_time += t;
+        }
+      }
+
+      currTime += t / 2;
+    };
+  };
+
+  const prep = 
     {
-      name: 'Toast bread',
-      start: 0,
-      end: 5,
-      color: '#ff6b6b',
-      steps: [{ time: 5, label: 'Remove toast', id: 'step-1' }]
-    },
-    {
-      name: 'Cook egg',
-      start: 0,
-      end: 8,
-      color: '#ffa500',
-      steps: [
-        { time: 1, label: 'Heat pan', id: 'step-2' },
-        { time: 3, label: 'Add oil', id: 'step-3' },
-        { time: 5, label: 'Crack egg', id: 'step-4' },
-        { time: 8, label: 'Flip egg', id: 'step-5' }
-      ]
-    },
-    {
-      name: 'Clean dishes',
-      start: 5,
-      end: 15,
-      color: '#4169e1',
-      steps: [
-        { time: 7, label: 'Wash pan', id: 'step-6' },
-        { time: 10, label: 'Wash plate', id: 'step-7' },
-        { time: 12, label: 'Wash utensils', id: 'step-8' }
-      ]
+      name: "Prep",
+      start: prep_start,
+      end: prep_time - prep_start,
+      color: colors[0],
+      steps: prep_steps
+    };
+
+    const cook = 
+      {
+        name: "Cook",
+        start: cook_start,
+        end: cook_time - cook_start,
+        color: colors[1],
+        steps: cook_steps
+    };
+
+    for (dish in recipeData.dishes) {
+      clean_steps.push(
+        {time: 3, label: `Wash ${dish}`, id: `step-${step_id++}`},
+      );
     }
-  ];
+
+    const clean = 
+      {
+        name: "Clean",
+        start: cook_start / 3,
+        end: recipeData.time,
+        color: colors[2],
+        steps: clean_steps
+    };
+
+  const tasks = [prep, cook, clean]
+  
+  // const tasks = [
+  //   {
+  //     name: 'Toast bread',
+  //     start: 0,
+  //     end: 5,
+  //     color: colors[0],
+  //     steps: [{ time: 5, label: 'Remove toast', id: 'step-1' }]
+  //   },
+  //   {
+  //     name: 'Cook egg',
+  //     start: 0,
+  //     end: 8,
+  //     color: colors[1],
+  //     steps: [
+  //       { time: 1, label: 'Heat pan', id: 'step-2' },
+  //       { time: 3, label: 'Add oil', id: 'step-3' },
+  //       { time: 5, label: 'Crack egg', id: 'step-4' },
+  //       { time: 8, label: 'Flip egg', id: 'step-5' }
+  //     ]
+  //   },
+  //   {
+  //     name: 'Clean dishes',
+  //     start: 5,
+  //     end: 15,
+  //     color: colors[2],
+  //     steps: [
+  //       { time: 7, label: 'Wash pan', id: 'step-6' },
+  //       { time: 10, label: 'Wash plate', id: 'step-7' },
+  //       { time: 12, label: 'Wash utensils', id: 'step-8' }
+  //     ]
+  //   }
+  // ];
 
   const toggleStep = (stepId) => {
     setCompletedSteps(prev => {
