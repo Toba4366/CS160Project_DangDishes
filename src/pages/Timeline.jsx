@@ -87,7 +87,7 @@ function Timeline() {
       </div>
 
       <div className="timeline-instructions">
-          <p>Tap on step markers to mark them as complete</p>
+          <i>Tap on step markers to mark them as complete.</i>
         </div>
 
       <div className="timeline-container">
@@ -124,9 +124,11 @@ function Timeline() {
                     <div
                       key={stepIndex}
                       className={`task-step ${completedSteps.has(step.id) ? 'completed' : ''}`}
-                      style={{ left: `${((step.time - task.start) / (task.end - task.start)) * 100}%` }}
+                      // steps: [{ time: 5, label: 'Remove toast', id: 'step-1' }]
+                      // (5-0)/(5-0)
+                      style={{ left: `${((step.time - task.start) / (task.end - task.start)) * 100}%`}}
                       onClick={() => toggleStep(step.id)}
-                      title={`${step.label} - Click to mark ${completedSteps.has(step.id) ? 'incomplete' : 'complete'}`}
+                      title={`${step.label} at ${(step.time + task.start)} min - Click to mark ${completedSteps.has(step.id) ? 'incomplete' : 'complete'}`}
                     >
                       <div className="step-dot"></div>
                       <div className="step-label">
