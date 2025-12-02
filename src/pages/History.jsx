@@ -171,7 +171,7 @@ function History() {
         </button>
         <h1>Cooking History</h1>
         <p className="description">Error: {error}</p>
-        <button onClick={() => window.location.reload()}>Try Again</button>
+        <button className="retry-button" onClick={() => window.location.reload()}>Try Again</button>
       </div>
     );
   }

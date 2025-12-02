@@ -189,15 +189,21 @@ function GenerateTimeline() {
   // Helper function to extract recipe name from URL
   const extractNameFromUrl = (url) => {
     try {
+      // Ensure the URL has a protocol for the URL constructor
+      let fullUrl = url;
+      if (!/^https?:\/\//i.test(url)) {
+        fullUrl = 'https://' + url;
+      }
+      
       // Extract last part of URL path
-      const urlObj = new URL(url);
+      const urlObj = new URL(fullUrl);
       const pathname = urlObj.pathname;
       const parts = pathname.split('/').filter(p => p);
-      const lastPart = parts[parts.length - 1];
+      const lastPart = parts[parts.length - 1] || 'Recipe from URL';
       
-      // Convert kebab-case to Title Case
+      // Convert kebab-case and snake_case to Title Case
       return lastPart
-        .split('-')
+        .split(/[-_]/)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
     } catch (e) {
@@ -232,8 +238,7 @@ function GenerateTimeline() {
         recipeText: null,
         time: null,
         dishes: null,
-        source: 'manual',
-        isHistory: false
+        source: 'manual'
       };
       
       // Save to history
@@ -271,8 +276,7 @@ function GenerateTimeline() {
         recipeText: textInput,
         time: null,
         dishes: null,
-        source: 'manual',
-        isHistory: false
+        source: 'manual'
       };
       
       // Save to history
