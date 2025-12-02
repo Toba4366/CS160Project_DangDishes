@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { recipeService } from '../services/recipeService';
 import './MiseEnPlace.css';
 
 function MiseEnPlace() {
@@ -37,6 +38,8 @@ function MiseEnPlace() {
 
   const [tools, setTools] = useState(recipeTools);
   const [ingredients, setIngredients] = useState(recipeIngredients);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const toggleTool = (id) => {
     setTools(tools.map(tool => 
@@ -48,6 +51,25 @@ function MiseEnPlace() {
     setIngredients(ingredients.map(ingredient => 
       ingredient.id === id ? { ...ingredient, checked: !ingredient.checked } : ingredient
     ));
+  };
+
+  const handleSaveRecipe = async () => {
+    if (saved || !recipeData?.needsSaving) return;
+
+    setSaving(true);
+    try {
+      await recipeService.addToHistory(recipeData);
+      setSaved(true);
+      // Update recipeData to remove needsSaving flag
+      if (recipeData) {
+        delete recipeData.needsSaving;
+      }
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      alert('Failed to save recipe. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleViewTimeline = () => {
@@ -108,6 +130,16 @@ function MiseEnPlace() {
           ))}
         </div>
       </div>
+
+      {recipeData?.needsSaving && (
+        <button 
+          className={`save-recipe-button ${saved ? 'saved' : ''}`}
+          onClick={handleSaveRecipe}
+          disabled={saved || saving}
+        >
+          {saving ? 'Saving...' : saved ? '✓ Saved to History' : 'Save Recipe to History'}
+        </button>
+      )}
 
       <button className="view-timeline-button" onClick={handleViewTimeline}>
         View Timeline
