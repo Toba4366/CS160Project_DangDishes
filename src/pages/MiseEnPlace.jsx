@@ -75,7 +75,7 @@ function MiseEnPlace() {
       </div>
 
       <h2>Mise en Place</h2>
-      <p className="description">Check off items as you gather them</p>
+      <i className="description">Check off items as you gather them.</i>
 
       <div className="checklist-section">
         <h3>Tools</h3>
