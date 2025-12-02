@@ -19,64 +19,70 @@ function Timeline() {
     }
   };
 
+  recipeData.recipeText = [
+        "Preheat oven to 350 degrees F (175 degrees C). Lightly grease cookie sheets.",
+        "In a large bowl, stir together cake mix, instant pudding, and rolled oats. Add oil, sour cream, water, and vanilla; mix until smooth and well blended. Stir in chocolate chips. Roll dough into 1 1/2 inch balls, and place 2 inches apart on the prepared cookie sheets.",
+        "Bake for 8 to 10 minutes in the preheated oven. Allow cookies to cool on baking sheet for 5 minutes before transferring to a wire rack to cool completely."
+    ];
+
+
+  recipeData.tools = ["Spatula", "Bowl", "Baking Sheet"];
+  recipeData.time = 30;
+
   const colors = ['#FF6663', '#9EC1CF', '#FEB144']
 
   // Mock timeline data - in a real app, this would be generated from the recipe
   const totalTime = recipeData?.time || 15;
-  var step_id = 1;
-  var task_id = 0;
+  let step_id = 1;
 
   const prepVerbs = ['preheat', 'chop', 'grease', 'soak', 'drain', 'clean', 'mix', 'sift'];
-  const cookingVerbs = ['cook', 'grill', 'saute', 'bake', 'fry', 'toast'];
-  const taskType = ['Prep', 'Cook', 'Clean'];
+  const cookingVerbs = ['cook', 'grill', 'saute', 'bake', 'Bake', 'fry', 'toast', 'cool'];
 
-  var prep_steps = [];
-  var prep_start = 0;
-  var prep_time = 0;
+  const prep_steps = [];
+  let prep_start = 0;
+  let prep_time = 0;
 
-  var cook_steps = [];
-  var cook_start  = 0;
-  var cook_time = 0;
+  const cook_steps = [];
+  let cook_start  = 0;
+  let cook_time = 0;
 
-  var clean_steps = [];
+  const clean_steps = [];
 
-  var currTime = 0;
+  let currTime = 0;
 
-  for (line in recipeData.recipeText) {
-    for (sentence in line.split(".")) {
+  for (const line of recipeData.recipeText) {
+    for (const sentence of line.split(". ")) {
       const words = sentence.split(" ")
 
-      var t = recipeData.time / 10; // ?
+      let duration = 2; // ?
       if (words.includes("minutes")) {
-        t = words[words.indexOf("minutes") - 1];
+        duration = parseInt(words[words.indexOf("minutes") - 1]);
       }
 
-      step = {time: t, label: sentence, id: `step-${step_id++}`};
-      
-      if (prepVerbs.some(r=> sentence.includes(r))) {
-        prep_steps.push(step);
-        if (prep_start == 0) {
-          prep_start = currTime;
-          prep_time += t;
-        }
+      if (cookingVerbs.some(r=> words.includes(r))) {
+        const step = {time: currTime, label: sentence, id: `step-${step_id++}`};
 
-      } else if ((cookingVerbs.some(r=> sentence.includes(r)))) {
         cook_steps.push(step);
         if (cook_start == 0) {
           cook_start = currTime;
-          cook_time += t;
         }
+        cook_time += duration;
+
+      } else {
+        const step = {time: currTime, label: sentence, id: `step-${step_id++}`};
+        prep_steps.push(step);
+        prep_time += duration;
       }
 
-      currTime += t / 2;
+      currTime += duration;
     };
   };
 
   const prep = 
     {
       name: "Prep",
-      start: prep_start,
-      end: prep_time - prep_start,
+      start: 0,
+      end: prep_time,
       color: colors[0],
       steps: prep_steps
     };
@@ -85,22 +91,25 @@ function Timeline() {
       {
         name: "Cook",
         start: cook_start,
-        end: cook_time - cook_start,
+        end: cook_time + cook_start,
         color: colors[1],
         steps: cook_steps
     };
 
-    for (dish in recipeData.dishes) {
+    let cleanDur = 0;
+    let clean_time = totalTime - cook_time;
+    for (const tool of recipeData.tools) {
       clean_steps.push(
-        {time: 3, label: `Wash ${dish}`, id: `step-${step_id++}`},
+        {time: (clean_time + cleanDur), label: `Wash ${tool}`, id: `step-${step_id++}`},
       );
+      cleanDur += clean_time / recipeData.tools.length;
     }
 
     const clean = 
       {
         name: "Clean",
-        start: cook_start / 3,
-        end: recipeData.time,
+        start: totalTime - cook_time,
+        end: totalTime,
         color: colors[2],
         steps: clean_steps
     };
@@ -196,7 +205,7 @@ function Timeline() {
           {/* Task bars */}
           <div className="tasks">
             {tasks.map((task, index) => (
-              <div key={index} className="task-row">
+              <div key={index} style={{height: `${task.steps.length * 45}px`}} className="task-row">
                 <div
                   className="task-bar"
                   style={{
@@ -210,11 +219,9 @@ function Timeline() {
                     <div
                       key={stepIndex}
                       className={`task-step ${completedSteps.has(step.id) ? 'completed' : ''}`}
-                      // steps: [{ time: 5, label: 'Remove toast', id: 'step-1' }]
-                      // (5-0)/(5-0)
                       style={{ left: `${((step.time - task.start) / (task.end - task.start)) * 100}%`}}
                       onClick={() => toggleStep(step.id)}
-                      title={`${step.label} at ${(step.time + task.start)} min - Click to mark ${completedSteps.has(step.id) ? 'incomplete' : 'complete'}`}
+                      title={`${step.label} at ${(step.time)} min - Click to mark ${completedSteps.has(step.id) ? 'incomplete' : 'complete'}`}
                     >
                       <div className="step-dot"></div>
                       <div className="step-label">

@@ -121,7 +121,7 @@
 
 .task-row {
   position: relative;
-  height: 80px;
+  /* height: 200px; */
 }
 
 .task-bar {
@@ -129,7 +129,7 @@
   height: 100%;
   border-radius: 8px;
   padding: 10px;
-  display: flex;
+  /* display: flex; */
   align-items: bottom;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -146,19 +146,19 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   position: absolute;
   left: 10px;
-  /* allow for task ticks to aligned within task bars, 
-  rather than floating above */
-  top: 75%;
+  bottom: 0;
   transform: translateY(-50%);
   white-space: nowrap;
 }
 
 .task-step {
-  position: absolute;
+  position: relative;
   /* top: -5px; TODO */
   cursor: pointer;
   display: flex;
-  align-items: center;
+  padding: 5px;
+  /* display: grid; */
+  /* align-items: stretch; */
 
 }
 
