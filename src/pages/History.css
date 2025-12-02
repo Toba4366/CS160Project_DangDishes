@@ -61,3 +61,26 @@
   font-size: 14px;
   color: #333;
 }
+
+.retry-button {
+  background: var(--primary-green);
+  color: black;
+  border: none;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  min-width: 120px;
+  transition: opacity 0.2s, transform 0.2s;
+  margin-top: 10px;
+}
+
+.retry-button:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+.retry-button:active {
+  transform: translateY(0);
+}
