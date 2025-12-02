@@ -124,11 +124,25 @@ function History() {
   const uploadedRecipes = history.filter(r => r.source === 'manual');
   const webRecipes = history.filter(r => r.source !== 'manual');
 
-  const handleRecipeClick = (recipe) => {
-    navigate('/mise-en-place', { 
+  const handleRecipeClick = async (recipe) => {
+    // If recipe has a URL and doesn't have ingredients/tools, fetch them
+    let fullRecipeData = recipe;
+    if (recipe.url && (!recipe.ingredients || !recipe.tools)) {
+      try {
+        const details = await recipeService.getRecipeDetails(recipe.url);
+        fullRecipeData = { ...recipe, ...details };
+      } catch (err) {
+        console.error('Failed to fetch recipe details:', err);
+        // Continue with basic data if details fetch fails
+      }
+    }
+
+    // Navigate through Loading page to ensure proper data handling
+    navigate('/loading', { 
       state: { 
         recipeName: recipe.name,
-        recipeData: recipe,
+        nextPage: 'mise-en-place',
+        recipeData: fullRecipeData,
         fromPage: 'history'
       } 
     });

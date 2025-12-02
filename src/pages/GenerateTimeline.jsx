@@ -262,22 +262,77 @@ function GenerateTimeline() {
     }
   };
 
+  // Parse ingredients from recipe text
+  const parseIngredientsFromText = (text) => {
+    const ingredients = [];
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    // Look for common ingredient patterns
+    const ingredientKeywords = ['cup', 'tbsp', 'tsp', 'teaspoon', 'tablespoon', 'oz', 'lb', 'pound', 'gram', 'kg', 'ml', 'liter'];
+    const cookingVerbs = ['heat', 'cook', 'bake', 'fry', 'boil', 'simmer', 'stir', 'mix', 'add', 'pour', 'chop', 'dice', 'slice'];
+    
+    for (const line of lines) {
+      const lowerLine = line.toLowerCase();
+      // Check if line contains measurement units (likely an ingredient)
+      const hasMeasurement = ingredientKeywords.some(keyword => lowerLine.includes(keyword));
+      // Check if line starts with a number (common ingredient format)
+      const startsWithNumber = /^\s*\d/.test(line);
+      // Check if line contains cooking verbs (likely instruction, not ingredient)
+      const hasCookingVerb = cookingVerbs.some(verb => lowerLine.startsWith(verb) || lowerLine.includes(` ${verb} `));
+      
+      if ((hasMeasurement || startsWithNumber) && !hasCookingVerb) {
+        ingredients.push(line.trim());
+      }
+    }
+    
+    return ingredients;
+  };
+
+  // Parse tools from recipe text
+  const parseToolsFromText = (text) => {
+    const tools = [];
+    const lowerText = text.toLowerCase();
+    const toolKeywords = [
+      'pan', 'pot', 'bowl', 'knife', 'spoon', 'fork', 
+      'oven', 'stove', 'blender', 'mixer', 'whisk',
+      'cutting board', 'baking sheet', 'spatula', 'skillet',
+      'saucepan', 'measuring cup', 'peeler', 'grater'
+    ];
+    
+    for (const tool of toolKeywords) {
+      if (lowerText.includes(tool)) {
+        tools.push(tool.charAt(0).toUpperCase() + tool.slice(1));
+      }
+    }
+    
+    return [...new Set(tools)]; // Remove duplicates
+  };
+
   // Handle text submission
   const handleTextSubmit = async () => {
     const error = validateText(textInput);
     setTextError(error);
     
     if (!error) {
+      // Parse ingredients and tools from text
+      const ingredients = parseIngredientsFromText(textInput);
+      const tools = parseToolsFromText(textInput);
+      
       // Create properly formatted recipe object
       const recipeData = {
         id: `text-${Date.now()}`,
         name: extractNameFromText(textInput) || 'Custom Recipe',
         url: null,
         recipeText: textInput,
+        ingredients: ingredients.length > 0 ? ingredients : null,
+        tools: tools.length > 0 ? tools : null,
         time: null,
         dishes: null,
         source: 'manual'
       };
+      
+      console.log('Parsed ingredients:', ingredients);
+      console.log('Parsed tools:', tools);
       
       // Save to history
       try {

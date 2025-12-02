@@ -57,6 +57,58 @@ const searchWithFallbackAPI = async (ingredients) => {
 };
 
 /**
+ * Fetch recipe details from TheMealDB API
+ * @param {string} mealId - The TheMealDB meal ID
+ * @returns {Promise<Object>} Recipe details with ingredients and tools
+ */
+const fetchTheMealDBDetails = async (mealId) => {
+  try {
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
+    const data = await response.json();
+    
+    if (!data.meals || !data.meals[0]) {
+      return { ingredients: [], tools: [] };
+    }
+    
+    const meal = data.meals[0];
+    
+    // Extract ingredients from strIngredient1-20 and strMeasure1-20
+    const ingredients = [];
+    for (let i = 1; i <= 20; i++) {
+      const ingredient = meal[`strIngredient${i}`];
+      const measure = meal[`strMeasure${i}`];
+      if (ingredient && ingredient.trim()) {
+        ingredients.push(measure ? `${measure.trim()} ${ingredient.trim()}` : ingredient.trim());
+      }
+    }
+    
+    // Extract tools from instructions (basic detection)
+    const instructions = meal.strInstructions || '';
+    const tools = [];
+    const toolKeywords = [
+      'pan', 'pot', 'bowl', 'knife', 'spoon', 'fork', 
+      'oven', 'stove', 'blender', 'mixer', 'whisk',
+      'cutting board', 'baking sheet', 'spatula'
+    ];
+    
+    toolKeywords.forEach(tool => {
+      if (instructions.toLowerCase().includes(tool)) {
+        tools.push(tool.charAt(0).toUpperCase() + tool.slice(1));
+      }
+    });
+    
+    return { 
+      ingredients, 
+      tools: [...new Set(tools)], // Remove duplicates
+      instructions: meal.strInstructions 
+    };
+  } catch (error) {
+    console.error('Failed to fetch TheMealDB details:', error);
+    return { ingredients: [], tools: [] };
+  }
+};
+
+/**
  * Recipe service for managing recipe search and history
  */
 export const recipeService = {
@@ -167,6 +219,13 @@ export const recipeService = {
    * @returns {Promise<Object>} Recipe details with ingredients and tools
    */
   getRecipeDetails: async (recipeUrl) => {
+    // Check if it's a TheMealDB URL
+    if (recipeUrl && recipeUrl.includes('themealdb.com/meal/')) {
+      const mealId = recipeUrl.split('/').pop();
+      return fetchTheMealDBDetails(mealId);
+    }
+    
+    // For other URLs, try backend scraper
     const hasBackend = await checkBackendHealth();
     
     if (hasBackend) {

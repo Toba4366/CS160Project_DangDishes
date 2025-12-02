@@ -64,11 +64,8 @@ function SearchResults() {
     let fullRecipeData = recipe;
     if (recipe.url) {
       try {
-        console.log('SearchResults - Fetching details for:', recipe.url);
         const details = await recipeService.getRecipeDetails(recipe.url);
-        console.log('SearchResults - Fetched details:', details);
         fullRecipeData = { ...recipe, ...details };
-        console.log('SearchResults - Full recipe data:', fullRecipeData);
       } catch (err) {
         console.error('Failed to fetch recipe details:', err);
         // Continue with basic data if details fetch fails
