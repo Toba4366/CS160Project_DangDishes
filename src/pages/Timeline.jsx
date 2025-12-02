@@ -29,17 +29,16 @@ function Timeline() {
   recipeData.tools = ["Spatula", "Bowl", "Baking Sheet"];
   recipeData.time = 30;
 
-  const colors = ['#FF6663', '#9EC1CF', '#FEB144']
+  const colors = ['#FF6663', '#9EC1CF', '#FEB144'];
 
   // Mock timeline data - in a real app, this would be generated from the recipe
   const totalTime = recipeData?.time || 15;
   let step_id = 1;
 
-  const prepVerbs = ['preheat', 'chop', 'grease', 'soak', 'drain', 'clean', 'mix', 'sift'];
-  const cookingVerbs = ['cook', 'grill', 'saute', 'bake', 'Bake', 'fry', 'toast', 'cool'];
+  // const prepVerbs = ['preheat', 'chop', 'grease', 'soak', 'drain', 'clean', 'mix', 'sift'];
+  const cookingVerbs = ['cook', 'grill', 'saute', 'sauté', 'bake', 'Bake', 'fry', 'toast', 'cool']; // to do: case safe
 
   const prep_steps = [];
-  let prep_start = 0;
   let prep_time = 0;
 
   const cook_steps = [];
@@ -52,7 +51,7 @@ function Timeline() {
 
   for (const line of recipeData.recipeText) {
     for (const sentence of line.split(". ")) {
-      const words = sentence.split(" ")
+      const words = sentence.split(" ");
 
       let duration = 2; // ?
       if (words.includes("minutes")) {
@@ -63,7 +62,7 @@ function Timeline() {
         const step = {time: currTime, label: sentence, id: `step-${step_id++}`};
 
         cook_steps.push(step);
-        if (cook_start == 0) {
+        if (cook_start === 0) {
           cook_start = currTime;
         }
         cook_time += duration;
@@ -75,8 +74,8 @@ function Timeline() {
       }
 
       currTime += duration;
-    };
-  };
+    }
+  }
 
   const prep = 
     {
