@@ -50,20 +50,31 @@ function MiseEnPlace() {
     ));
   };
 
+  const handleBack = () => {
+    // Navigate based on workflow origin
+    if (fromPage === 'history') {
+      navigate('/history');
+    } else if (fromPage === 'search-results') {
+      navigate('/search-results', { state: { filters: recipeData?.filters } });
+    } else {
+      navigate('/generate-timeline');
+    }
+  };
+
   const handleViewTimeline = () => {
     navigate('/loading', { 
       state: { 
         recipeName: recipeName || 'Recipe',
         nextPage: 'timeline',
         recipeData,
-        fromPage: 'mise-en-place'
+        fromPage
       } 
     });
   };
 
   return (
     <div className="mise-en-place">
-      <button className="back-button" onClick={() => navigate(-1)}>
+      <button className="back-button" onClick={handleBack}>
         ← Back
       </button>
 
