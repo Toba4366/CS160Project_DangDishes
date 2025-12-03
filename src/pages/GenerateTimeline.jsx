@@ -473,6 +473,65 @@ function GenerateTimeline() {
     return [...new Set(tools)]; // Remove duplicates
   };
 
+  // Parse instructions from recipe text
+  const parseInstructionsFromText = (text) => {
+    const instructions = [];
+    const lines = text.split('\n');
+    let inInstructionsSection = false;
+    
+    const instructionStarters = [
+      'heat', 'cook', 'add', 'mix', 'stir', 'pour', 'place', 'remove',
+      'bake', 'boil', 'fry', 'sauté', 'combine', 'whisk', 'blend',
+      'season', 'serve', 'prep', 'cut', 'chop', 'dice', 'slice', 'preheat'
+    ];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      const lowerLine = line.toLowerCase();
+      
+      // Detect instructions section header
+      if (lowerLine === 'instructions' || lowerLine === 'instructions:' || 
+          lowerLine === 'directions' || lowerLine === 'directions:' ||
+          lowerLine === 'steps' || lowerLine === 'steps:' ||
+          lowerLine === 'method' || lowerLine === 'method:') {
+        inInstructionsSection = true;
+        continue;
+      }
+      
+      // Stop at next section header
+      if (lowerLine === 'ingredients' || lowerLine === 'ingredients:' ||
+          lowerLine === 'notes' || lowerLine === 'notes:') {
+        inInstructionsSection = false;
+        continue;
+      }
+      
+      // Skip empty lines or very short lines
+      if (!line || line.length < 10) continue;
+      
+      // If in instructions section, add the line
+      if (inInstructionsSection) {
+        // Clean up numbered lists (1. or 1) prefix)
+        const cleaned = line.replace(/^\d+[\.)]\s*/, '').trim();
+        if (cleaned.length > 5) {
+          instructions.push(cleaned);
+        }
+      } else {
+        // Check if line starts with instruction verb or is numbered
+        const startsWithNumber = /^\d+[\.)]\s*/.test(line);
+        const startsWithInstruction = instructionStarters.some(verb => 
+          lowerLine.startsWith(verb + ' ') || lowerLine.startsWith(verb + ',')
+        );
+        
+        if ((startsWithNumber || startsWithInstruction) && line.length > 15) {
+          const cleaned = line.replace(/^\d+[\.)]\s*/, '').trim();
+          instructions.push(cleaned);
+        }
+      }
+    }
+    
+    return instructions;
+  };
+
   // Handle text submission
   const handleTextSubmit = async () => {
     console.log('handleTextSubmit called with text:', textInput.substring(0, 50) + '...');
@@ -482,9 +541,10 @@ function GenerateTimeline() {
     
     if (!error) {
       console.log('No validation error, proceeding with parsing...');
-      // Parse ingredients and tools from text
+      // Parse ingredients, tools, and instructions from text
       const ingredients = parseIngredientsFromText(textInput);
       const tools = parseToolsFromText(textInput);
+      const instructions = parseInstructionsFromText(textInput);
       
       // Create properly formatted recipe object
       const recipeData = {
@@ -494,6 +554,7 @@ function GenerateTimeline() {
         recipeText: textInput,
         ingredients: ingredients.length > 0 ? ingredients : null,
         tools: tools.length > 0 ? tools : null,
+        instructions: instructions.length > 0 ? instructions : null,
         time: null,
         dishes: null,
         source: 'manual'
@@ -501,6 +562,7 @@ function GenerateTimeline() {
       
       console.log('Parsed ingredients:', ingredients);
       console.log('Parsed tools:', tools);
+      console.log('Parsed instructions:', instructions);
       
       // Save to history
       try {

@@ -43,6 +43,7 @@ class Recipe(BaseModel):
     ingredients: Optional[List[str]] = None
     tools: Optional[List[str]] = None
     recipeText: Optional[str] = None
+    instructions: Optional[List[str]] = None
 
 class SearchResponse(BaseModel):
     recipes: List[dict]
