@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
+import { prepVerbs, cookingVerbs, passiveVerbs, activeVerbs } from '../constants/recipeVerbs';
 import './Timeline.css';
 
 function Timeline() {
@@ -46,12 +47,6 @@ function Timeline() {
 
   // Generate timeline data from recipe instructions with better time extraction and multitasking
   let step_id = 1;
-
-  // Classify verbs for task categorization
-  const prepVerbs = ['preheat', 'chop', 'dice', 'slice', 'cut', 'grease', 'soak', 'drain', 'clean', 'mix', 'whisk', 'sift', 'measure', 'peel', 'mince', 'combine', 'stir together'];
-  const cookingVerbs = ['cook', 'grill', 'saute', 'sauté', 'bake', 'roast', 'fry', 'boil', 'simmer', 'broil', 'steam', 'poach'];
-  const passiveVerbs = ['cool', 'rest', 'set', 'chill', 'freeze', 'marinate', 'rise']; // Can do other tasks during these
-  const activeVerbs = ['toast', 'brown', 'flip', 'turn', 'stir', 'toss', 'watch'];
 
   /**
    * Extract duration from instruction text with better pattern matching
@@ -163,7 +158,7 @@ function Timeline() {
   });
 
   // 2. Start passive steps (like preheating) early, overlapping with prep
-  let passiveStartTime = Math.min(2, prepTime / 2); // Start passive tasks early
+  let passiveStartTime = Math.max(0, Math.min(2, prepTime / 2)); // Start passive tasks early, but not before time 0
   passive_steps.forEach(step => {
     step.time = passiveStartTime;
     passiveStartTime += 1; // Stagger passive step starts slightly

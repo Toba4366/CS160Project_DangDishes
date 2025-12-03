@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
+import { instructionStarters } from '../constants/recipeVerbs';
 import './GenerateTimeline.css';
 
 /**
@@ -276,6 +277,9 @@ function GenerateTimeline() {
       'inch', 'inches', 'can', 'cans', 'package', 'packages', 'box', 'bunch', 'head', 'whole'
     ];
     
+    // Pre-compile regex for measurement detection (performance optimization)
+    const measurementRegex = new RegExp(`\\b(${measurementKeywords.join('|')})\\b`, 'i');
+    
     // Common food/ingredient words
     const foodWords = [
       'chicken', 'beef', 'pork', 'fish', 'bacon', 'sausage', 'meat', 'turkey', 'goose', 'duck',
@@ -288,14 +292,8 @@ function GenerateTimeline() {
       'jam', 'honey', 'mustard', 'sauce', 'paste'
     ];
     
-    // Instructions typically start with these verbs
-    const instructionStarters = [
-      'preheat', 'heat', 'bring', 'place', 'put', 'set', 'remove', 
-      'transfer', 'arrange', 'spread', 'cover', 'bake', 'roast',
-      'cook', 'add', 'stir', 'mix', 'whisk', 'combine', 'season',
-      'brown', 'sauté', 'simmer', 'boil', 'fry', 'grill', 'broil',
-      'chop', 'dice', 'mince', 'slice', 'cut', 'pour', 'drizzle'
-    ];
+    // Pre-compile regex for food word detection (performance optimization)
+    const foodWordsRegex = new RegExp(`\\b(${foodWords.join('|')})`, 'i');
     
     // Words that indicate it's NOT an ingredient line (webpage/UI noise)
     const skipKeywords = [
@@ -377,22 +375,16 @@ function GenerateTimeline() {
       
       // Strong signals this IS an ingredient:
       
-      // 1. Has measurement keywords
-      const hasMeasurement = measurementKeywords.some(keyword => {
-        const keywordPattern = new RegExp(`\\b${keyword}\\b`, 'i');
-        return keywordPattern.test(lowerLine);
-      });
+      // 1. Has measurement keywords (using pre-compiled regex)
+      const hasMeasurement = measurementRegex.test(lowerLine);
       
       // 2. startsWithNumber already declared above
       
       // 3. Has fraction characters (½, ¼, ⅓, etc.)
       const hasFraction = /[½¼⅓⅔¾⅛⅜⅝⅞]/.test(trimmedLine);
       
-      // 4. Contains common food words
-      const hasFoodWord = foodWords.some(food => {
-        const foodPattern = new RegExp(`\\b${food}`, 'i');
-        return foodPattern.test(lowerLine);
-      });
+      // 4. Contains common food words (using pre-compiled regex)
+      const hasFoodWord = foodWordsRegex.test(lowerLine);
       
       // 5. In ingredients section or short line with food word (simple list)
       const isSimpleIngredient = inIngredientsSection || 
@@ -478,12 +470,6 @@ function GenerateTimeline() {
     const instructions = [];
     const lines = text.split('\n');
     let inInstructionsSection = false;
-    
-    const instructionStarters = [
-      'heat', 'cook', 'add', 'mix', 'stir', 'pour', 'place', 'remove',
-      'bake', 'boil', 'fry', 'sauté', 'combine', 'whisk', 'blend',
-      'season', 'serve', 'prep', 'cut', 'chop', 'dice', 'slice', 'preheat'
-    ];
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();

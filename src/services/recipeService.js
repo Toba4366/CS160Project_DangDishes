@@ -59,7 +59,7 @@ const searchWithFallbackAPI = async (ingredients) => {
 /**
  * Fetch recipe details from TheMealDB API
  * @param {string} mealId - The TheMealDB meal ID
- * @returns {Promise<Object>} Recipe details with ingredients and tools
+ * @returns {Promise<Object>} Recipe details with ingredients, tools, and instructions. The returned object has the structure: { ingredients: string[], tools: string[], instructions: string }
  */
 const fetchTheMealDBDetails = async (mealId) => {
   try {
@@ -165,7 +165,7 @@ export const recipeService = {
   /**
    * Helper function to update localStorage history with deduplication
    * @param {Object} recipe - Recipe object to add
-   * @returns {Object} Success response with recipe
+   * @returns {{ success: boolean, recipe: Object }} Object containing success status and the updated recipe
    */
   updateLocalStorageHistory: (recipe) => {
     const history = JSON.parse(localStorage.getItem('recipeHistory') || '[]');

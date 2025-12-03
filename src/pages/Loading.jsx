@@ -49,7 +49,6 @@ function Loading() {
           } else {
             // Preserve needsSaving flag when merging details
             finalRecipeData = { ...recipeData, ...details, needsSaving: recipeData.needsSaving };
-            setEnhancedRecipeData(finalRecipeData);
           }
         } catch (err) {
           console.error('Failed to fetch recipe details:', err);

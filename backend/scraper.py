@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import random
+import re
 
 def scrape_allrecipes(ingredient):
     """
@@ -182,6 +183,9 @@ def scrape_recipe_details(url):
         prep_time = None
         cook_time = None
         total_time = None
+        # Numeric versions of time/servings fields for easier frontend consumption
+        # total_time_minutes: numeric value of total_time in minutes
+        # servings_number: numeric value of servings
         total_time_minutes = None
         servings = None
         servings_number = None
@@ -199,7 +203,6 @@ def scrape_recipe_details(url):
         
         # Parse total time into minutes
         if total_time:
-            import re
             # Try to extract minutes and hours
             hours_match = re.search(r'(\d+)\s*(?:hour|hr)', total_time, re.IGNORECASE)
             mins_match = re.search(r'(\d+)\s*(?:minute|min)', total_time, re.IGNORECASE)
@@ -213,7 +216,6 @@ def scrape_recipe_details(url):
         for elem in servings_elements:
             text = elem.get_text(strip=True)
             # Try to extract number from servings text
-            import re
             servings_match = re.search(r'(\d+)', text)
             if servings_match:
                 servings = text
