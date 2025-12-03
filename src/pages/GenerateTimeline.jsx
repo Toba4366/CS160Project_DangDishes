@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
 import { instructionStarters } from '../constants/recipeVerbs';
+import { detectToolsFromText } from '../utils/recipeParser';
 import './GenerateTimeline.css';
 
 /**
@@ -445,24 +446,12 @@ function GenerateTimeline() {
     return ingredients;
   };
 
-  // Parse tools from recipe text
+  /**
+   * Parse tools from recipe text
+   * Now uses shared utility from recipeParser.js for consistency
+   */
   const parseToolsFromText = (text) => {
-    const tools = [];
-    const lowerText = text.toLowerCase();
-    const toolKeywords = [
-      'pan', 'pot', 'bowl', 'knife', 'spoon', 'fork', 
-      'oven', 'stove', 'blender', 'mixer', 'whisk',
-      'cutting board', 'baking sheet', 'spatula', 'skillet',
-      'saucepan', 'measuring cup', 'peeler', 'grater'
-    ];
-    
-    for (const tool of toolKeywords) {
-      if (lowerText.includes(tool)) {
-        tools.push(tool.charAt(0).toUpperCase() + tool.slice(1));
-      }
-    }
-    
-    return [...new Set(tools)]; // Remove duplicates
+    return detectToolsFromText(text);
   };
 
   // Parse instructions from recipe text

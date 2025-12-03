@@ -1,4 +1,5 @@
 import { api } from './api';
+import { detectToolsFromText } from '../utils/recipeParser';
 
 // Fallback to free API if backend is not available
 const FALLBACK_API = 'https://www.themealdb.com/api/json/v1/1';
@@ -82,24 +83,13 @@ const fetchTheMealDBDetails = async (mealId) => {
       }
     }
     
-    // Extract tools from instructions (basic detection)
+    // Extract tools from instructions using shared utility
     const instructions = meal.strInstructions || '';
-    const tools = [];
-    const toolKeywords = [
-      'pan', 'pot', 'bowl', 'knife', 'spoon', 'fork', 
-      'oven', 'stove', 'blender', 'mixer', 'whisk',
-      'cutting board', 'baking sheet', 'spatula'
-    ];
-    
-    toolKeywords.forEach(tool => {
-      if (instructions.toLowerCase().includes(tool)) {
-        tools.push(tool.charAt(0).toUpperCase() + tool.slice(1));
-      }
-    });
+    const tools = detectToolsFromText(instructions);
     
     return { 
       ingredients, 
-      tools: [...new Set(tools)], // Remove duplicates
+      tools,
       instructions: meal.strInstructions 
     };
   } catch (error) {
