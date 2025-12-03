@@ -12,14 +12,11 @@ function Timeline() {
   const [saving, setSaving] = useState(false);
 
   const handleBack = () => {
-    if (fromPage === 'mise-en-place') {
-      navigate('/mise-en-place', { 
-        state: { recipeName, recipeData },
-        replace: false
-      });
-    } else {
-      navigate(-1);
-    }
+    // Always go back to mise-en-place
+    navigate('/mise-en-place', { 
+      state: { recipeName, recipeData, fromPage },
+      replace: false
+    });
   };
 
   const handleSaveToHistory = async () => {
