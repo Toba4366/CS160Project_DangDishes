@@ -532,16 +532,62 @@ function GenerateTimeline() {
     return instructions;
   };
 
+  // Extract time in minutes from recipe text
+  const extractTimeFromText = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    // Look for "total time:", "cook time:", "time:" patterns
+    const timePatterns = [
+      /(?:total|cook|prep)?\s*time:\s*(\d+)\s*(?:hours?|hrs?)?\s*(\d+)?\s*(?:minutes?|mins?)/i,
+      /(\d+)\s*(?:hours?|hrs?)\s*(?:and\s*)?(\d+)?\s*(?:minutes?|mins?)/i,
+      /(\d+)\s*(?:minutes?|mins?)/i,
+    ];
+    
+    for (const pattern of timePatterns) {
+      const match = lowerText.match(pattern);
+      if (match) {
+        const hours = match[1] && !match[1].includes('minute') ? parseInt(match[1]) : 0;
+        const minutes = match[2] ? parseInt(match[2]) : (hours ? 0 : parseInt(match[1]));
+        return (hours * 60) + minutes;
+      }
+    }
+    
+    return null;
+  };
+
+  // Extract servings/yield from recipe text
+  const extractServingsFromText = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    // Look for "serves X", "servings: X", "yield: X", "makes X servings"
+    const servingsPatterns = [
+      /(?:serves?|servings?|yield):\s*(\d+)/i,
+      /(?:makes|yields?)\s*(\d+)\s*servings?/i,
+      /(\d+)\s*servings?/i,
+    ];
+    
+    for (const pattern of servingsPatterns) {
+      const match = lowerText.match(pattern);
+      if (match) {
+        return parseInt(match[1]);
+      }
+    }
+    
+    return null;
+  };
+
   // Handle text submission
   const handleTextSubmit = async () => {
     const error = validateText(textInput);
     setTextError(error);
     
     if (!error) {
-      // Parse ingredients, tools, and instructions from text
+      // Parse ingredients, tools, instructions, time, and servings from text
       const ingredients = parseIngredientsFromText(textInput);
       const tools = parseToolsFromText(textInput);
       const instructions = parseInstructionsFromText(textInput);
+      const time = extractTimeFromText(textInput);
+      const dishes = extractServingsFromText(textInput);
       
       // Create properly formatted recipe object
       const recipeData = {
@@ -549,11 +595,11 @@ function GenerateTimeline() {
         name: extractNameFromText(textInput) || 'Custom Recipe',
         url: null,
         recipeText: textInput,
-        ingredients: ingredients.length > 0 ? ingredients : null,
-        tools: tools.length > 0 ? tools : null,
-        instructions: instructions.length > 0 ? instructions : null,
-        time: null,
-        dishes: null,
+        ingredients: ingredients,
+        tools: tools,
+        instructions: instructions,
+        time: time,
+        dishes: dishes,
         source: 'manual'
       };
       

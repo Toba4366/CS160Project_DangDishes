@@ -67,7 +67,7 @@ const fetchTheMealDBDetails = async (mealId) => {
     const data = await response.json();
     
     if (!data.meals || !data.meals[0]) {
-      return { ingredients: [], tools: [] };
+      return { ingredients: [], tools: [], instructions: '' };
     }
     
     const meal = data.meals[0];
@@ -104,7 +104,7 @@ const fetchTheMealDBDetails = async (mealId) => {
     };
   } catch (error) {
     console.error('Failed to fetch TheMealDB details:', error);
-    return { ingredients: [], tools: [] };
+    return { ingredients: [], tools: [], instructions: '' };
   }
 };
 

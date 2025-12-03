@@ -178,11 +178,13 @@ def scrape_recipe_details(url):
             if text and len(text) > 10:
                 instructions.append(text)
         
-        # Extract times
+        # Extract times and servings
         prep_time = None
         cook_time = None
         total_time = None
+        total_time_minutes = None
         servings = None
+        servings_number = None
         
         # Look for time elements
         time_elements = soup.find_all(['div', 'span'], class_=lambda x: x and 'time' in str(x).lower())
@@ -195,6 +197,29 @@ def scrape_recipe_details(url):
             elif 'total' in text:
                 total_time = text
         
+        # Parse total time into minutes
+        if total_time:
+            import re
+            # Try to extract minutes and hours
+            hours_match = re.search(r'(\d+)\s*(?:hour|hr)', total_time, re.IGNORECASE)
+            mins_match = re.search(r'(\d+)\s*(?:minute|min)', total_time, re.IGNORECASE)
+            
+            hours = int(hours_match.group(1)) if hours_match else 0
+            minutes = int(mins_match.group(1)) if mins_match else 0
+            total_time_minutes = (hours * 60) + minutes
+        
+        # Look for servings/yield information
+        servings_elements = soup.find_all(['div', 'span'], class_=lambda x: x and ('serving' in str(x).lower() or 'yield' in str(x).lower()))
+        for elem in servings_elements:
+            text = elem.get_text(strip=True)
+            # Try to extract number from servings text
+            import re
+            servings_match = re.search(r'(\d+)', text)
+            if servings_match:
+                servings = text
+                servings_number = int(servings_match.group(1))
+                break
+        
         recipe_details = {
             'ingredients': ingredients[:20] if ingredients else [],  # Limit to 20
             'tools': tools[:10] if tools else [],  # Limit to 10
@@ -202,7 +227,9 @@ def scrape_recipe_details(url):
             'prepTime': prep_time,
             'cookTime': cook_time,
             'totalTime': total_time,
-            'servings': servings
+            'time': total_time_minutes,  # Numeric time in minutes
+            'servings': servings,
+            'dishes': servings_number  # Numeric servings count
         }
         
         print(f"Extracted {len(ingredients)} ingredients, {len(tools)} tools, {len(instructions)} steps")

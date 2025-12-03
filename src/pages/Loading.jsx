@@ -35,7 +35,7 @@ function Loading() {
   useEffect(() => {
     const fetchDataAndNavigate = async () => {
       let finalRecipeData = recipeData;
-      let scrapeFailed = false;
+      let scrapingFailed = false;
 
       // If recipe has a URL and is from manual entry, fetch ingredients/tools
       if (recipeData?.url && recipeData?.source === 'manual' && fromPage === 'generate-timeline') {
@@ -44,7 +44,7 @@ function Loading() {
           
           // Check if scraping actually returned data
           if (!details.ingredients || details.ingredients.length === 0) {
-            scrapeFailed = true;
+            scrapingFailed = true;
             setScrapingFailed(true);
           } else {
             // Preserve needsSaving flag when merging details
@@ -53,16 +53,16 @@ function Loading() {
           }
         } catch (err) {
           console.error('Failed to fetch recipe details:', err);
-          scrapeFailed = true;
+          scrapingFailed = true;
           setScrapingFailed(true);
         }
       }
 
       // Wait minimum 2.5 seconds for better UX (or longer if showing error)
-      await new Promise(resolve => setTimeout(resolve, scrapeFailed ? 1000 : 2500));
+      await new Promise(resolve => setTimeout(resolve, scrapingFailed ? 1000 : 2500));
 
       // If scraping failed, don't navigate - show error message
-      if (scrapeFailed) {
+      if (scrapingFailed) {
         return; // Stay on loading page to show error
       }
 

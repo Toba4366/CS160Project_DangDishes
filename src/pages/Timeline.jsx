@@ -28,7 +28,7 @@ function Timeline() {
       setSaved(true);
     } catch (err) {
       console.error('Failed to save to history:', err);
-      alert('Failed to save to history. Please try again.');
+      alert(`Failed to save to history: ${err.message || 'Unknown error'}. Please try again.`);
     } finally {
       setSaving(false);
     }
