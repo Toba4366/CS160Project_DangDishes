@@ -19,6 +19,8 @@ function Timeline() {
     }
   };
 
+  recipeData.name = "Oatmeal cookies"
+  recipeData.dishes = 12;
   recipeData.recipeText = [
         "Preheat oven to 350 degrees F (175 degrees C). Lightly grease cookie sheets.",
         "In a large bowl, stir together cake mix, instant pudding, and rolled oats. Add oil, sour cream, water, and vanilla; mix until smooth and well blended. Stir in chocolate chips. Roll dough into 1 1/2 inch balls, and place 2 inches apart on the prepared cookie sheets.",

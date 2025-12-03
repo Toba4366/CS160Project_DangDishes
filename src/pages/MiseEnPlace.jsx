@@ -22,6 +22,21 @@ function MiseEnPlace() {
     { id: 'i4', name: 'Salt and pepper', checked: false },
   ];
 
+  recipeData.ingredients = [
+        "1 (18.25 ounce) package white cake mix",
+        "1 (3.4 ounce) package instant butterscotch pudding mix",
+        "2/3 cup rolled oats",
+        "1/2 cup vegetable oil",
+        "1/2 cup sour cream",
+        "1/4 cup water",
+        "2 teaspoons vanilla extract",
+        "1 cup semisweet chocolate chips"
+    ]
+
+  recipeData.tools = ["Spatula", "Bowl", "Baking Sheet"];
+  recipeData.time = 30;
+  recipeData.dishes = 12;
+
   // Extract tools and ingredients from recipeData if available
   const recipeTools = recipeData?.tools?.map((tool, idx) => ({
     id: `t${idx}`,
