@@ -21,6 +21,7 @@ function Loading() {
   const navigate = useNavigate();
   const { recipeName, nextPage, recipeData, fromPage, filters } = location.state || {};
   const [enhancedRecipeData, setEnhancedRecipeData] = useState(recipeData);
+  const [scrapingFailed, setScrapingFailed] = useState(false);
   
   const randomTip = cookingTips[Math.floor(Math.random() * cookingTips.length)];
 
@@ -35,23 +36,37 @@ function Loading() {
   useEffect(() => {
     const fetchDataAndNavigate = async () => {
       let finalRecipeData = recipeData;
+      let scrapeFailed = false;
 
       // If recipe has a URL and is from manual entry, fetch ingredients/tools
       if (recipeData?.url && recipeData?.source === 'manual' && fromPage === 'generate-timeline') {
         try {
           console.log('Fetching recipe details for URL:', recipeData.url);
           const details = await recipeService.getRecipeDetails(recipeData.url);
-          // Preserve needsSaving flag when merging details
-          finalRecipeData = { ...recipeData, ...details, needsSaving: recipeData.needsSaving };
-          setEnhancedRecipeData(finalRecipeData);
+          
+          // Check if scraping actually returned data
+          if (!details.ingredients || details.ingredients.length === 0) {
+            scrapeFailed = true;
+            setScrapingFailed(true);
+          } else {
+            // Preserve needsSaving flag when merging details
+            finalRecipeData = { ...recipeData, ...details, needsSaving: recipeData.needsSaving };
+            setEnhancedRecipeData(finalRecipeData);
+          }
         } catch (err) {
           console.error('Failed to fetch recipe details:', err);
-          // Continue with original data if fetch fails
+          scrapeFailed = true;
+          setScrapingFailed(true);
         }
       }
 
-      // Wait minimum 2.5 seconds for better UX
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      // Wait minimum 2.5 seconds for better UX (or longer if showing error)
+      await new Promise(resolve => setTimeout(resolve, scrapeFailed ? 1000 : 2500));
+
+      // If scraping failed, don't navigate - show error message
+      if (scrapeFailed) {
+        return; // Stay on loading page to show error
+      }
 
       // Navigate to next page
       if (nextPage === 'timeline') {
@@ -65,6 +80,40 @@ function Loading() {
 
     fetchDataAndNavigate();
   }, [navigate, nextPage, recipeName, recipeData, fromPage, filters]);
+
+  if (scrapingFailed) {
+    return (
+      <div className="loading">
+        <h1>Backend Not Available</h1>
+        <div className="error-message">
+          <p>⚠️ Unable to scrape recipe from URL</p>
+          <p style={{ marginTop: '20px', fontSize: '0.9em', color: '#666' }}>
+            The backend server needs to be running to extract ingredients from recipe URLs.
+          </p>
+          <div style={{ marginTop: '30px' }}>
+            <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>To fix this:</p>
+            <ol style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto', lineHeight: '1.8' }}>
+              <li>Open a terminal in the project directory</li>
+              <li>Run: <code style={{ background: '#f0f0f0', padding: '2px 6px', borderRadius: '3px' }}>cd backend && python app.py</code></li>
+              <li>Wait for "Running on http://localhost:8000"</li>
+              <li>Try submitting your recipe URL again</li>
+            </ol>
+          </div>
+          <div style={{ marginTop: '30px' }}>
+            <p style={{ fontWeight: 'bold' }}>Or alternatively:</p>
+            <p>Copy and paste the recipe text directly instead of using a URL</p>
+          </div>
+        </div>
+        <button 
+          className="retry-button" 
+          onClick={() => navigate('/generate-timeline')}
+          style={{ marginTop: '30px' }}
+        >
+          ← Back to Recipe Input
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="loading">

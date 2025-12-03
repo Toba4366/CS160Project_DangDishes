@@ -6,7 +6,13 @@ import './MiseEnPlace.css';
 function MiseEnPlace() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recipeName, recipeData, fromPage } = location.state || {};  // Use recipe data if available, otherwise use mock data
+  const { recipeName, recipeData, fromPage } = location.state || {};
+  
+  console.log('MiseEnPlace: Received recipe data:', recipeData);
+  console.log('MiseEnPlace: Ingredients:', recipeData?.ingredients);
+  console.log('MiseEnPlace: Tools:', recipeData?.tools);
+  
+  // Use recipe data if available, otherwise use mock data
   const defaultTools = [
     { id: 't1', name: 'Frying pan', checked: false },
     { id: 't2', name: 'Spatula', checked: false },

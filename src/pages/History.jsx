@@ -125,6 +125,8 @@ function History() {
   const webRecipes = history.filter(r => r.source !== 'manual');
 
   const handleRecipeClick = async (recipe) => {
+    console.log('History: Clicked recipe:', recipe);
+    
     // If recipe has a URL and doesn't have ingredients/tools, fetch them
     let fullRecipeData = recipe;
     if (recipe.url && (!recipe.ingredients || !recipe.tools)) {
@@ -137,11 +139,12 @@ function History() {
       }
     }
 
-    // Navigate through Loading page to ensure proper data handling
-    navigate('/loading', { 
+    console.log('History: Navigating with data:', fullRecipeData);
+    
+    // Navigate directly to mise-en-place with the recipe data
+    navigate('/mise-en-place', { 
       state: { 
-        recipeName: recipe.name,
-        nextPage: 'mise-en-place',
+        recipeName: fullRecipeData.name,
         recipeData: fullRecipeData,
         fromPage: 'history'
       } 

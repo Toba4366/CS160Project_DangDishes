@@ -175,19 +175,88 @@ export const recipeService = {
         return await api.post('/api/history', recipe);
       } catch (error) {
         console.log('Backend not available, saving to localStorage');
-        // Fallback to localStorage
+        // Fallback to localStorage with deduplication
         const history = JSON.parse(localStorage.getItem('recipeHistory') || '[]');
-        recipe.lastCooked = new Date().toISOString();
-        history.unshift(recipe);
+        
+        // Check for existing recipe by URL or name+source
+        let existingIndex = -1;
+        for (let i = 0; i < history.length; i++) {
+          if (recipe.url && history[i].url === recipe.url) {
+            existingIndex = i;
+            break;
+          }
+          if (!recipe.url && !history[i].url && 
+              history[i].name === recipe.name && 
+              history[i].source === recipe.source) {
+            existingIndex = i;
+            break;
+          }
+        }
+        
+        if (existingIndex !== -1) {
+          // Update existing recipe
+          history[existingIndex].lastCooked = new Date().toISOString();
+          history[existingIndex].cookCount = (history[existingIndex].cookCount || 1) + 1;
+          // Update any new fields
+          Object.keys(recipe).forEach(key => {
+            if (key !== 'lastCooked' && key !== 'cookCount' && key !== 'isHistory') {
+              history[existingIndex][key] = recipe[key];
+            }
+          });
+          // Move to front
+          const updated = history.splice(existingIndex, 1)[0];
+          history.unshift(updated);
+        } else {
+          // Add new recipe
+          recipe.lastCooked = new Date().toISOString();
+          recipe.cookCount = 1;
+          recipe.isHistory = true;
+          history.unshift(recipe);
+        }
+        
         localStorage.setItem('recipeHistory', JSON.stringify(history.slice(0, 50)));
         return { success: true, recipe };
       }
     } else {
-      // Use localStorage as fallback
+      // Use localStorage as fallback with deduplication
       const history = JSON.parse(localStorage.getItem('recipeHistory') || '[]');
-      recipe.lastCooked = new Date().toISOString();
-      recipe.isHistory = true;
-      history.unshift(recipe);
+      
+      // Check for existing recipe by URL or name+source
+      let existingIndex = -1;
+      for (let i = 0; i < history.length; i++) {
+        if (recipe.url && history[i].url === recipe.url) {
+          existingIndex = i;
+          break;
+        }
+        if (!recipe.url && !history[i].url && 
+            history[i].name === recipe.name && 
+            history[i].source === recipe.source) {
+          existingIndex = i;
+          break;
+        }
+      }
+      
+      if (existingIndex !== -1) {
+        // Update existing recipe
+        history[existingIndex].lastCooked = new Date().toISOString();
+        history[existingIndex].cookCount = (history[existingIndex].cookCount || 1) + 1;
+        // Update any new fields
+        Object.keys(recipe).forEach(key => {
+          if (key !== 'lastCooked' && key !== 'cookCount' && key !== 'isHistory') {
+            history[existingIndex][key] = recipe[key];
+          }
+        });
+        // Move to front
+        const updated = history.splice(existingIndex, 1)[0];
+        history.unshift(updated);
+      } else {
+        // Add new recipe
+        recipe.lastCooked = new Date().toISOString();
+        recipe.cookCount = 1;
+        recipe.isHistory = true;
+        history.unshift(recipe);
+      }
+      
       localStorage.setItem('recipeHistory', JSON.stringify(history.slice(0, 50)));
       return { success: true, recipe };
     }

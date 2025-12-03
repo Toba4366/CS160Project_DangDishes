@@ -40,6 +40,9 @@ class Recipe(BaseModel):
     source: Optional[str] = None
     lastCooked: Optional[str] = None
     cookCount: Optional[int] = None
+    ingredients: Optional[List[str]] = None
+    tools: Optional[List[str]] = None
+    recipeText: Optional[str] = None
 
 class SearchResponse(BaseModel):
     recipes: List[dict]

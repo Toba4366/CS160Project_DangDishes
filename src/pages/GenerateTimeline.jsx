@@ -267,21 +267,186 @@ function GenerateTimeline() {
     const ingredients = [];
     const lines = text.split('\n').filter(line => line.trim());
     
-    // Look for common ingredient patterns
-    const ingredientKeywords = ['cup', 'tbsp', 'tsp', 'teaspoon', 'tablespoon', 'oz', 'lb', 'pound', 'gram', 'kg', 'ml', 'liter'];
-    const cookingVerbs = ['heat', 'cook', 'bake', 'fry', 'boil', 'simmer', 'stir', 'mix', 'add', 'pour', 'chop', 'dice', 'slice'];
+    // Expanded measurement keywords
+    const measurementKeywords = [
+      'cup', 'cups', 'tbsp', 'tsp', 'teaspoon', 'tablespoon', 'tablespoons', 'teaspoons',
+      'oz', 'ounce', 'ounces', 'lb', 'lbs', 'pound', 'pounds', 
+      'gram', 'grams', 'kg', 'kilogram', 'ml', 'milliliter', 'liter', 'liters',
+      'pinch', 'dash', 'handful', 'clove', 'cloves', 'piece', 'pieces',
+      'inch', 'inches', 'can', 'cans', 'package', 'packages', 'box', 'bunch', 'head', 'whole'
+    ];
+    
+    // Common food/ingredient words
+    const foodWords = [
+      'chicken', 'beef', 'pork', 'fish', 'bacon', 'sausage', 'meat', 'turkey', 'goose', 'duck',
+      'egg', 'eggs', 'milk', 'butter', 'cream', 'cheese', 'oil', 'vinegar',
+      'salt', 'pepper', 'sugar', 'flour', 'water', 'wine', 'stock', 'broth',
+      'onion', 'garlic', 'shallot', 'tomato', 'pasta', 'noodle', 'rice',
+      'herb', 'basil', 'oregano', 'parsley', 'thyme', 'rosemary',
+      'paprika', 'cayenne', 'cumin', 'curry', 'nutmeg', 'cinnamon',
+      'carrot', 'celery', 'potato', 'spinach', 'lettuce', 'mushroom',
+      'jam', 'honey', 'mustard', 'sauce', 'paste'
+    ];
+    
+    // Instructions typically start with these verbs
+    const instructionStarters = [
+      'preheat', 'heat', 'bring', 'place', 'put', 'set', 'remove', 
+      'transfer', 'arrange', 'spread', 'cover', 'bake', 'roast',
+      'cook', 'add', 'stir', 'mix', 'whisk', 'combine', 'season',
+      'brown', 'sauté', 'simmer', 'boil', 'fry', 'grill', 'broil',
+      'chop', 'dice', 'mince', 'slice', 'cut', 'pour', 'drizzle'
+    ];
+    
+    // Words that indicate it's NOT an ingredient line (webpage/UI noise)
+    const skipKeywords = [
+      'skip to', 'content', 'now viewing', 'mise en place', 'check off',
+      'recipe', 'directions', 'instructions', 'serves', 'servings', 'yield',
+      'prep time', 'cook time', 'total time', 'mins', 'min', 'hours', 'hrs',
+      'nutrition', 'calories', 'fat', 'carbs', 'protein', 'sodium',
+      'save', 'print', 'rate', 'review', 'rating', 'photo', 'video', 
+      'allrecipes', 'log in', 'sign up', 'sign in', 'newsletter', 'subscribe',
+      'advertisement', 'ad', 'sponsored', 'follow us', 'social',
+      'about us', 'contact', 'privacy', 'terms', 'policy', 'careers',
+      'editorial', 'vetting', 'advertise', 'magazine', 'subscription',
+      'manage your', 'help', 'choices', 'guidelines', 'community',
+      'local offers', 'occasions', 'cuisines', 'kitchen tips', 'news', 'features',
+      'tools', 'ingredients', 'gather them', 'made it', 'home cooks',
+      'dinners', 'meals', 'holidays', 'events', 'christmas'
+    ];
+    
+    let inIngredientsSection = false;
+    let inInstructionsSection = false;
     
     for (const line of lines) {
-      const lowerLine = line.toLowerCase();
-      // Check if line contains measurement units (likely an ingredient)
-      const hasMeasurement = ingredientKeywords.some(keyword => lowerLine.includes(keyword));
-      // Check if line starts with a number (common ingredient format)
-      const startsWithNumber = /^\s*\d/.test(line);
-      // Check if line contains cooking verbs (likely instruction, not ingredient)
-      const hasCookingVerb = cookingVerbs.some(verb => lowerLine.startsWith(verb) || lowerLine.includes(` ${verb} `));
+      const lowerLine = line.toLowerCase().trim();
+      const trimmedLine = line.trim();
       
-      if ((hasMeasurement || startsWithNumber) && !hasCookingVerb) {
-        ingredients.push(line.trim());
+      if (!lowerLine || trimmedLine.length < 2) continue;
+      
+      // Detect section headers
+      if (lowerLine === 'ingredients' || lowerLine === 'ingredients:') {
+        inIngredientsSection = true;
+        inInstructionsSection = false;
+        continue;
+      }
+      if (lowerLine === 'instructions' || lowerLine === 'instructions:' || 
+          lowerLine === 'directions' || lowerLine === 'directions:' ||
+          lowerLine === 'steps' || lowerLine === 'steps:') {
+        inInstructionsSection = true;
+        inIngredientsSection = false;
+        continue;
+      }
+      
+      // Skip if in instructions section
+      if (inInstructionsSection) continue;
+      
+      // Skip webpage noise and UI elements
+      const hasSkipKeyword = skipKeywords.some(keyword => lowerLine.includes(keyword));
+      if (hasSkipKeyword) continue;
+      
+      // Skip very short lines (likely UI elements or single words)
+      if (trimmedLine.length < 3) continue;
+      
+      // Check if line starts with a number (used in multiple places below)
+      const startsWithNumber = /^\s*\d/.test(trimmedLine);
+      
+      // Skip lines that are just section headers (all caps, ends with colon)
+      if (trimmedLine === trimmedLine.toUpperCase() || trimmedLine.endsWith(':')) {
+        // Unless it has measurements or numbers, then might be ingredient with note
+        if (!startsWithNumber && !measurementKeywords.some(k => lowerLine.includes(k))) {
+          continue;
+        }
+      }
+      
+      // Skip very long lines (likely instructions)
+      if (trimmedLine.length > 150) continue;
+      
+      // Skip time duration patterns like "10 mins", "3 hrs 30 mins"
+      const isTimeDuration = /^\d+\s*(min|mins|hr|hrs|hour|hours)/.test(lowerLine) ||
+                            /^\d+\s*(min|mins|hr|hrs)\s*·/.test(lowerLine);
+      if (isTimeDuration) continue;
+      
+      // Skip standalone numbers or numbers with just "dishes"
+      if (/^\d+$/.test(trimmedLine) || /^\d+\s*dishes?$/.test(lowerLine)) continue;
+      
+      // Skip lines that start with instruction verbs
+      const startsWithInstruction = instructionStarters.some(verb => 
+        lowerLine.startsWith(verb + ' ') || lowerLine.startsWith(verb + ':')
+      );
+      if (startsWithInstruction && trimmedLine.length > 50) continue;
+      
+      // Strong signals this IS an ingredient:
+      
+      // 1. Has measurement keywords
+      const hasMeasurement = measurementKeywords.some(keyword => {
+        const keywordPattern = new RegExp(`\\b${keyword}\\b`, 'i');
+        return keywordPattern.test(lowerLine);
+      });
+      
+      // 2. startsWithNumber already declared above
+      
+      // 3. Has fraction characters (½, ¼, ⅓, etc.)
+      const hasFraction = /[½¼⅓⅔¾⅛⅜⅝⅞]/.test(trimmedLine);
+      
+      // 4. Contains common food words
+      const hasFoodWord = foodWords.some(food => {
+        const foodPattern = new RegExp(`\\b${food}`, 'i');
+        return foodPattern.test(lowerLine);
+      });
+      
+      // 5. In ingredients section or short line with food word (simple list)
+      const isSimpleIngredient = inIngredientsSection || 
+        (trimmedLine.length <= 60 && hasFoodWord && !startsWithInstruction);
+      
+      // 6. Parenthetical notes like "(or onion)" are often part of ingredients
+      const hasParenthetical = /\([^)]+\)/.test(trimmedLine);
+      
+      // Decide if it's an ingredient
+      if (hasMeasurement || startsWithNumber || hasFraction || 
+          (isSimpleIngredient && !startsWithInstruction) ||
+          (hasFoodWord && trimmedLine.length <= 50 && hasParenthetical)) {
+        
+        // Clean up the line
+        let cleanLine = trimmedLine
+          .replace(/^[-•*]\s*/, '') // Remove bullet points
+          .replace(/^\d+\.\s*/, '') // Remove numbered lists
+          .trim();
+        
+        if (cleanLine && cleanLine.length > 1 && !ingredients.includes(cleanLine)) {
+          ingredients.push(cleanLine);
+        }
+      }
+    }
+    
+    // Fallback: if we found very few ingredients, be more lenient
+    if (ingredients.length < 5) {
+      for (const line of lines) {
+        const lowerLine = line.toLowerCase().trim();
+        const trimmedLine = line.trim();
+        
+        if (!trimmedLine || trimmedLine.length > 80 || ingredients.includes(trimmedLine)) continue;
+        
+        // Skip obvious non-ingredients
+        const hasSkipKeyword = skipKeywords.some(keyword => lowerLine.includes(keyword));
+        if (hasSkipKeyword) continue;
+        
+        const startsWithInstruction = instructionStarters.some(verb => 
+          lowerLine.startsWith(verb + ' ')
+        );
+        if (startsWithInstruction) continue;
+        
+        // Include if it has a food word and is reasonably short
+        const hasFoodWord = foodWords.some(food => {
+          const foodPattern = new RegExp(`\\b${food}`, 'i');
+          return foodPattern.test(lowerLine);
+        });
+        
+        if (hasFoodWord && trimmedLine.length <= 60) {
+          let cleanLine = trimmedLine.replace(/^[-•*]\s*/, '').trim();
+          if (cleanLine && !ingredients.includes(cleanLine)) {
+            ingredients.push(cleanLine);
+          }
+        }
       }
     }
     
@@ -310,10 +475,13 @@ function GenerateTimeline() {
 
   // Handle text submission
   const handleTextSubmit = async () => {
+    console.log('handleTextSubmit called with text:', textInput.substring(0, 50) + '...');
     const error = validateText(textInput);
+    console.log('Validation error:', error);
     setTextError(error);
     
     if (!error) {
+      console.log('No validation error, proceeding with parsing...');
       // Parse ingredients and tools from text
       const ingredients = parseIngredientsFromText(textInput);
       const tools = parseToolsFromText(textInput);
