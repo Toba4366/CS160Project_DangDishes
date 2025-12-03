@@ -350,11 +350,11 @@ function Timeline() {
         <div className="timeline-chart">
           {/* Time markers */}
           <div className="time-axis">
-            {Array.from({ length: Math.ceil(totalTime / 5) + 1 }, (_, i) => i * 5).map(time => (
+            {Array.from({ length: Math.ceil(displayTotalTime / 5) + 1 }, (_, i) => i * 5).map(time => (
               <div
                 key={time}
                 className="time-marker"
-                style={{ left: `${(time / totalTime) * 100}%` }}
+                style={{ left: `${(time / displayTotalTime) * 100}%` }}
               >
                 <div className="time-dot"></div>
                 <div className="time-label">{time}</div>
@@ -371,8 +371,8 @@ function Timeline() {
                   className="task-bar"
                   style={{
                     backgroundColor: task.color,
-                    left: `${(task.start / totalTime) * 100}%`,
-                    width: `${((task.end - task.start) / totalTime) * 100}%`
+                    left: `${(task.start / displayTotalTime) * 100}%`,
+                    width: `${((task.end - task.start) / displayTotalTime) * 100}%`
                   }}
                 >
                   <span className="task-name">{task.name}</span>
