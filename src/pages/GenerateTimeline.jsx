@@ -534,13 +534,10 @@ function GenerateTimeline() {
 
   // Handle text submission
   const handleTextSubmit = async () => {
-    console.log('handleTextSubmit called with text:', textInput.substring(0, 50) + '...');
     const error = validateText(textInput);
-    console.log('Validation error:', error);
     setTextError(error);
     
     if (!error) {
-      console.log('No validation error, proceeding with parsing...');
       // Parse ingredients, tools, and instructions from text
       const ingredients = parseIngredientsFromText(textInput);
       const tools = parseToolsFromText(textInput);
@@ -560,14 +557,9 @@ function GenerateTimeline() {
         source: 'manual'
       };
       
-      console.log('Parsed ingredients:', ingredients);
-      console.log('Parsed tools:', tools);
-      console.log('Parsed instructions:', instructions);
-      
       // Save to history
       try {
         await recipeService.addToHistory(recipeData);
-        console.log('Saved to history:', recipeData.name);
       } catch (err) {
         console.error('Failed to save to history:', err);
         // Continue anyway

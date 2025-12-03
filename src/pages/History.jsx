@@ -92,6 +92,7 @@ function History() {
   const formatLastCooked = (isoString) => {
     if (!isoString) return 'Unknown';
     const date = new Date(isoString);
+    if (isNaN(date.getTime())) return 'Unknown';
     const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -125,8 +126,6 @@ function History() {
   const webRecipes = history.filter(r => r.source !== 'manual');
 
   const handleRecipeClick = async (recipe) => {
-    console.log('History: Clicked recipe:', recipe);
-    
     // If recipe has a URL and doesn't have ingredients/tools, fetch them
     let fullRecipeData = recipe;
     if (recipe.url && (!recipe.ingredients || !recipe.tools)) {
@@ -138,8 +137,6 @@ function History() {
         // Continue with basic data if details fetch fails
       }
     }
-
-    console.log('History: Navigating with data:', fullRecipeData);
     
     // Navigate directly to mise-en-place with the recipe data
     navigate('/mise-en-place', { 
@@ -229,7 +226,7 @@ function History() {
                   <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
                 </div>
                 <div className="recipe-details">
-                  {recipe.time} min · {recipe.dishes} dishes
+                  {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
                 </div>
               </button>
             ))}

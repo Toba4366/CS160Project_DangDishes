@@ -20,7 +20,6 @@ function Loading() {
   const location = useLocation();
   const navigate = useNavigate();
   const { recipeName, nextPage, recipeData, fromPage, filters } = location.state || {};
-  const [enhancedRecipeData, setEnhancedRecipeData] = useState(recipeData);
   const [scrapingFailed, setScrapingFailed] = useState(false);
   
   const randomTip = cookingTips[Math.floor(Math.random() * cookingTips.length)];
@@ -41,7 +40,6 @@ function Loading() {
       // If recipe has a URL and is from manual entry, fetch ingredients/tools
       if (recipeData?.url && recipeData?.source === 'manual' && fromPage === 'generate-timeline') {
         try {
-          console.log('Fetching recipe details for URL:', recipeData.url);
           const details = await recipeService.getRecipeDetails(recipeData.url);
           
           // Check if scraping actually returned data

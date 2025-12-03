@@ -34,20 +34,19 @@ function Timeline() {
     }
   };
 
-  recipeData.recipeText = [
-        "Preheat oven to 350 degrees F (175 degrees C). Lightly grease cookie sheets.",
-        "In a large bowl, stir together cake mix, instant pudding, and rolled oats. Add oil, sour cream, water, and vanilla; mix until smooth and well blended. Stir in chocolate chips. Roll dough into 1 1/2 inch balls, and place 2 inches apart on the prepared cookie sheets.",
-        "Bake for 8 to 10 minutes in the preheated oven. Allow cookies to cool on baking sheet for 5 minutes before transferring to a wire rack to cool completely."
-    ];
-
-
-  recipeData.tools = ["Spatula", "Bowl", "Baking Sheet"];
-  recipeData.time = 30;
+  // Mock data for testing when recipe data is missing
+  const mockInstructions = [
+    "Preheat oven to 350 degrees F (175 degrees C). Lightly grease cookie sheets.",
+    "In a large bowl, stir together cake mix, instant pudding, and rolled oats. Add oil, sour cream, water, and vanilla; mix until smooth and well blended. Stir in chocolate chips. Roll dough into 1 1/2 inch balls, and place 2 inches apart on the prepared cookie sheets.",
+    "Bake for 8 to 10 minutes in the preheated oven. Allow cookies to cool on baking sheet for 5 minutes before transferring to a wire rack to cool completely."
+  ];
+  
+  const instructions = recipeData?.instructions || recipeData?.recipeText || mockInstructions;
+  const totalTime = recipeData?.time || 30;
 
   const colors = ['#FF6663', '#9EC1CF', '#FEB144'];
 
-  // Mock timeline data - in a real app, this would be generated from the recipe
-  const totalTime = recipeData?.time || 15;
+  // Generate timeline data from recipe instructions
   let step_id = 1;
 
   // const prepVerbs = ['preheat', 'chop', 'grease', 'soak', 'drain', 'clean', 'mix', 'sift'];
@@ -64,7 +63,7 @@ function Timeline() {
 
   let currTime = 0;
 
-  for (const line of recipeData.recipeText) {
+  for (const line of instructions) {
     for (const sentence of line.split(". ")) {
       const words = sentence.split(" ");
 
