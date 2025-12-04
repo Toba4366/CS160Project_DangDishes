@@ -1,4 +1,5 @@
 import { api } from './api';
+import { detectToolsFromText } from '../utils/recipeParser';
 
 // Fallback to free API if backend is not available
 const FALLBACK_API = 'https://www.themealdb.com/api/json/v1/1';
@@ -57,6 +58,47 @@ const searchWithFallbackAPI = async (ingredients) => {
 };
 
 /**
+ * Fetch recipe details from TheMealDB API
+ * @param {string} mealId - The TheMealDB meal ID
+ * @returns {Promise<Object>} Recipe details with ingredients, tools, and instructions. The returned object has the structure: { ingredients: string[], tools: string[], instructions: string }
+ */
+const fetchTheMealDBDetails = async (mealId) => {
+  try {
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
+    const data = await response.json();
+    
+    if (!data.meals || !data.meals[0]) {
+      return { ingredients: [], tools: [], instructions: '' };
+    }
+    
+    const meal = data.meals[0];
+    
+    // Extract ingredients from strIngredient1-20 and strMeasure1-20
+    const ingredients = [];
+    for (let i = 1; i <= 20; i++) {
+      const ingredient = meal[`strIngredient${i}`];
+      const measure = meal[`strMeasure${i}`];
+      if (ingredient && ingredient.trim()) {
+        ingredients.push(measure ? `${measure.trim()} ${ingredient.trim()}` : ingredient.trim());
+      }
+    }
+    
+    // Extract tools from instructions using shared utility
+    const instructions = meal.strInstructions || '';
+    const tools = detectToolsFromText(instructions);
+    
+    return { 
+      ingredients, 
+      tools,
+      instructions: meal.strInstructions 
+    };
+  } catch (error) {
+    console.error('Failed to fetch TheMealDB details:', error);
+    return { ingredients: [], tools: [], instructions: '' };
+  }
+};
+
+/**
  * Recipe service for managing recipe search and history
  */
 export const recipeService = {
@@ -111,6 +153,54 @@ export const recipeService = {
   },
 
   /**
+   * Helper function to update localStorage history with deduplication
+   * @param {Object} recipe - Recipe object to add
+   * @returns {{ success: boolean, recipe: Object }} Object containing success status and the updated recipe
+   */
+  updateLocalStorageHistory: (recipe) => {
+    const history = JSON.parse(localStorage.getItem('recipeHistory') || '[]');
+    
+    // Check for existing recipe by URL or name+source
+    let existingIndex = -1;
+    for (let i = 0; i < history.length; i++) {
+      if (recipe.url && history[i].url === recipe.url) {
+        existingIndex = i;
+        break;
+      }
+      if (!recipe.url && !history[i].url && 
+          history[i].name === recipe.name && 
+          history[i].source === recipe.source) {
+        existingIndex = i;
+        break;
+      }
+    }
+    
+    if (existingIndex !== -1) {
+      // Update existing recipe
+      history[existingIndex].lastCooked = new Date().toISOString();
+      history[existingIndex].cookCount = (history[existingIndex].cookCount || 1) + 1;
+      // Update any new fields
+      Object.keys(recipe).forEach(key => {
+        if (key !== 'lastCooked' && key !== 'cookCount' && key !== 'isHistory') {
+          history[existingIndex][key] = recipe[key];
+        }
+      });
+      // Move to front
+      const updated = history.splice(existingIndex, 1)[0];
+      history.unshift(updated);
+    } else {
+      // Add new recipe
+      recipe.lastCooked = new Date().toISOString();
+      recipe.cookCount = 1;
+      recipe.isHistory = true;
+      history.unshift(recipe);
+    }
+    
+    localStorage.setItem('recipeHistory', JSON.stringify(history.slice(0, 50)));
+    return { success: true, recipe };
+  },
+
+  /**
    * Add a recipe to cooking history
    * @param {Object} recipe - Recipe object to add
    * @returns {Promise<Object>} Success response with recipe
@@ -123,21 +213,10 @@ export const recipeService = {
         return await api.post('/api/history', recipe);
       } catch (error) {
         console.log('Backend not available, saving to localStorage');
-        // Fallback to localStorage
-        const history = JSON.parse(localStorage.getItem('recipeHistory') || '[]');
-        recipe.lastCooked = new Date().toISOString();
-        history.unshift(recipe);
-        localStorage.setItem('recipeHistory', JSON.stringify(history.slice(0, 50)));
-        return { success: true, recipe };
+        return recipeService.updateLocalStorageHistory(recipe);
       }
     } else {
-      // Use localStorage as fallback
-      const history = JSON.parse(localStorage.getItem('recipeHistory') || '[]');
-      recipe.lastCooked = new Date().toISOString();
-      recipe.isHistory = true;
-      history.unshift(recipe);
-      localStorage.setItem('recipeHistory', JSON.stringify(history.slice(0, 50)));
-      return { success: true, recipe };
+      return recipeService.updateLocalStorageHistory(recipe);
     }
   },
 
@@ -167,6 +246,13 @@ export const recipeService = {
    * @returns {Promise<Object>} Recipe details with ingredients and tools
    */
   getRecipeDetails: async (recipeUrl) => {
+    // Check if it's a TheMealDB URL
+    if (recipeUrl && recipeUrl.includes('themealdb.com/meal/')) {
+      const mealId = recipeUrl.split('/').pop();
+      return fetchTheMealDBDetails(mealId);
+    }
+    
+    // For other URLs, try backend scraper
     const hasBackend = await checkBackendHealth();
     
     if (hasBackend) {

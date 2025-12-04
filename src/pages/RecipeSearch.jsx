@@ -52,6 +52,10 @@ function RecipeSearch() {
 
   return (
     <div className="recipe-search">
+      <button className="back-button" onClick={() => navigate('/')}>
+        ← Back
+      </button>
+      
       <h1>Recipe Search</h1>
       <p className="description">
         Select ingredients and set your preferences to find the perfect recipe!

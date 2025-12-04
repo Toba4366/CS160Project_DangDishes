@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { recipeService } from '../services/recipeService';
 import './MiseEnPlace.css';
 
 function MiseEnPlace() {
   const navigate = useNavigate();
   const location = useLocation();
   const { recipeName, recipeData, fromPage } = location.state || {};
-
+  
   // Use recipe data if available, otherwise use mock data
   const defaultTools = [
     { id: 't1', name: 'Frying pan', checked: false },
@@ -52,6 +53,8 @@ function MiseEnPlace() {
 
   const [tools, setTools] = useState(recipeTools);
   const [ingredients, setIngredients] = useState(recipeIngredients);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const toggleTool = (id) => {
     setTools(tools.map(tool => 
@@ -65,20 +68,50 @@ function MiseEnPlace() {
     ));
   };
 
+  const handleSaveRecipe = async () => {
+    if (saved || !recipeData?.needsSaving) return;
+
+    setSaving(true);
+    try {
+      await recipeService.addToHistory(recipeData);
+      setSaved(true);
+      // Update recipeData to remove needsSaving flag
+      if (recipeData) {
+        delete recipeData.needsSaving;
+      }
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      alert('Failed to save recipe. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBack = () => {
+    // Navigate based on workflow origin
+    if (fromPage === 'history') {
+      navigate('/history');
+    } else if (fromPage === 'search-results') {
+      navigate('/search-results', { state: { filters: recipeData?.filters } });
+    } else {
+      navigate('/generate-timeline');
+    }
+  };
+
   const handleViewTimeline = () => {
     navigate('/loading', { 
       state: { 
         recipeName: recipeName || 'Recipe',
         nextPage: 'timeline',
         recipeData,
-        fromPage: 'mise-en-place'
+        fromPage
       } 
     });
   };
 
   return (
     <div className="mise-en-place">
-      <button className="back-button" onClick={() => navigate(-1)}>
+      <button className="back-button" onClick={handleBack}>
         ← Back
       </button>
 
@@ -123,6 +156,16 @@ function MiseEnPlace() {
           ))}
         </div>
       </div>
+
+      {recipeData?.needsSaving && (
+        <button 
+          className={`save-recipe-button ${saved ? 'saved' : ''}`}
+          onClick={handleSaveRecipe}
+          disabled={saved || saving}
+        >
+          {saving ? 'Saving...' : saved ? '✓ Saved to History' : 'Save Recipe to History'}
+        </button>
+      )}
 
       <button className="view-timeline-button" onClick={handleViewTimeline}>
         View Timeline
