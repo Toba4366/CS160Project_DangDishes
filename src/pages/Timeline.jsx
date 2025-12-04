@@ -59,28 +59,43 @@ function Timeline() {
     });
 
     // Schedule with row assignment for overlaps
-    const scheduleTrack = (steps, startTime = 0) => {
+    const scheduleTrack = (steps, startTime = 0, allowOverlap = false) => {
       const rows = [[]];
-      steps.forEach(s => {
-        s.start = startTime;
+      let currentTime = startTime;
+      
+      steps.forEach((s, idx) => {
+        if (allowOverlap && s.passive) {
+          // Passive steps start early and stagger
+          s.start = Math.max(0, Math.min(2, startTime / 2)) + idx;
+        } else {
+          s.start = currentTime;
+        }
+        
         let rowIdx = rows.findIndex(r => r.length === 0 || r[r.length - 1].end <= s.start);
         if (rowIdx === -1) { rows.push([]); rowIdx = rows.length - 1; }
         s.end = s.start + s.duration;
         s.row = rowIdx;
         rows[rowIdx].push(s);
-        if (!s.passive) startTime = s.end;
+        
+        if (!s.passive) currentTime = s.end;
       });
-      return Math.max(...steps.map(s => s.end), startTime);
+      return Math.max(...steps.map(s => s.end), currentTime);
     };
 
     let time = scheduleTrack(tracks.prep, 0);
-    time = scheduleTrack(tracks.cook, time);
+    time = scheduleTrack(tracks.cook, time, true); // Allow passive overlap
     
     const longestPassive = tracks.cook.find(s => s.passive && s.duration > 5);
-    if (longestPassive) {
+    if (longestPassive && tracks.clean.length > 0) {
+      const cleanWindow = Math.max(0, longestPassive.duration - 2);
+      const timePerTool = Math.min(2, cleanWindow / tracks.clean.length);
       let cleanTime = longestPassive.start + 2;
+      
       tracks.clean.forEach(s => { 
-        s.start = cleanTime; s.end = cleanTime + s.duration; s.row = 0; cleanTime = s.end; 
+        s.start = cleanTime; 
+        s.end = cleanTime + timePerTool; 
+        s.row = 0; 
+        cleanTime = s.end; 
       });
     } else {
       scheduleTrack(tracks.clean, time);
@@ -124,7 +139,7 @@ function Timeline() {
   return (
     <div className="timeline-page">
       <div className="timeline-header">
-        <button className="back-button" onClick={() => navigate('/mise-en-place', { state: { recipeName, recipeData, fromPage } })}>← Back</button>
+        <button className="back-button" onClick={() => navigate('/mise-en-place', { state: { recipeName, recipeData, fromPage }, replace: false })}>← Back</button>
         <div className="header-info">
           <h1>{timelineData.title}</h1>
           <div className="meta-tags">
@@ -145,7 +160,7 @@ function Timeline() {
       </div>
 
       <div className="timeline-instructions">
-        <p>Tap on step markers to mark them as complete</p>
+        <p>Tap on step markers to mark them as complete.</p>
       </div>
 
       <div className="timeline-container">
