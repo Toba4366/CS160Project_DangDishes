@@ -108,8 +108,16 @@ function Timeline() {
       scheduleTrack(tracks.clean, time);
     }
 
-    // Merge passive and active cook back together for display
-    tracks.cook = [...passiveCook, ...activeCook];
+    // Merge and reassign rows for all cook steps to handle overlaps
+    const allCookSteps = [...passiveCook, ...activeCook].sort((a, b) => a.start - b.start);
+    const cookRows = [[]];
+    allCookSteps.forEach(s => {
+      let rowIdx = cookRows.findIndex(r => r.length === 0 || r[r.length - 1].end <= s.start);
+      if (rowIdx === -1) { cookRows.push([]); rowIdx = cookRows.length - 1; }
+      s.row = rowIdx;
+      cookRows[rowIdx].push(s);
+    });
+    tracks.cook = allCookSteps;
     
     const totalTime = Math.max(...[...tracks.prep, ...tracks.cook, ...tracks.clean].map(s => s.end || 0));
 
