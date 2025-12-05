@@ -108,27 +108,30 @@ export function convertReagentToTimeline(reagentData) {
     stepMap.set(step.id, { ...step, calculatedStart: 0 });
   });
   
-  // Shared visited set for circular dependency detection across all recursion
-  const globalVisited = new Set();
-  
-  // Calculate start times recursively
-  const calculateStartTime = (stepId) => {
-    if (globalVisited.has(stepId)) {
+  // Calculate start times recursively with per-call visited tracking
+  const calculateStartTime = (stepId, visited = new Set()) => {
+    // Check if we're in a circular dependency (revisiting same step in THIS recursion path)
+    if (visited.has(stepId)) {
       console.warn(`⚠️ Circular dependency detected for step ${stepId}`);
       return 0;
     }
-    globalVisited.add(stepId);
     
     const step = stepMap.get(stepId);
     if (!step) return 0;
+    
+    // If already calculated, return cached value (memoization)
     if (step.calculatedStart > 0) return step.calculatedStart;
+    
+    // Add to visited for THIS recursion path only
+    visited.add(stepId);
     
     let earliestStart = 0;
     if (step.dependencies && step.dependencies.length > 0) {
       step.dependencies.forEach(depId => {
         const depStep = stepMap.get(depId);
         if (depStep) {
-          const depStart = calculateStartTime(depId);
+          // Pass visited set down the recursion tree
+          const depStart = calculateStartTime(depId, visited);
           const depEnd = depStart + (depStep.duration || 0);
           earliestStart = Math.max(earliestStart, depEnd);
         }
@@ -139,6 +142,7 @@ export function convertReagentToTimeline(reagentData) {
     return earliestStart;
   };
   
+  // Calculate start time for each step (visited set is fresh for each top-level call)
   reagentData.steps.forEach(step => calculateStartTime(step.id));
   
   // Second pass: Create timeline steps with calculated start times
