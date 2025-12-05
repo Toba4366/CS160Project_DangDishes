@@ -59,17 +59,12 @@ function Timeline() {
     });
 
     // Schedule with row assignment for overlaps
-    const scheduleTrack = (steps, startTime = 0, allowOverlap = false) => {
+    const scheduleTrack = (steps, startTime = 0) => {
       const rows = [[]];
       let currentTime = startTime;
       
-      steps.forEach((s, idx) => {
-        if (allowOverlap && s.passive) {
-          // Passive steps start early and stagger
-          s.start = Math.max(0, Math.min(2, startTime / 2)) + idx;
-        } else {
-          s.start = currentTime;
-        }
+      steps.forEach(s => {
+        s.start = currentTime;
         
         let rowIdx = rows.findIndex(r => r.length === 0 || r[r.length - 1].end <= s.start);
         if (rowIdx === -1) { rows.push([]); rowIdx = rows.length - 1; }
@@ -79,13 +74,25 @@ function Timeline() {
         
         if (!s.passive) currentTime = s.end;
       });
-      return Math.max(...steps.map(s => s.end), currentTime);
+      return currentTime;
     };
 
     let time = scheduleTrack(tracks.prep, 0);
-    time = scheduleTrack(tracks.cook, time, true); // Allow passive overlap
     
-    const longestPassive = tracks.cook.find(s => s.passive && s.duration > 5);
+    // Schedule passive cook steps early to overlap with prep
+    const passiveCook = tracks.cook.filter(s => s.passive);
+    const activeCook = tracks.cook.filter(s => !s.passive);
+    
+    let passiveStartTime = Math.max(0, Math.min(2, time / 2));
+    passiveCook.forEach((s, idx) => {
+      s.start = passiveStartTime + idx;
+      s.end = s.start + s.duration;
+      s.row = 0;
+    });
+    
+    time = scheduleTrack(activeCook, time);
+    
+    const longestPassive = passiveCook.find(s => s.duration > 5);
     if (longestPassive && tracks.clean.length > 0) {
       const cleanWindow = Math.max(0, longestPassive.duration - 2);
       const timePerTool = Math.min(2, cleanWindow / tracks.clean.length);
@@ -101,6 +108,9 @@ function Timeline() {
       scheduleTrack(tracks.clean, time);
     }
 
+    // Merge passive and active cook back together for display
+    tracks.cook = [...passiveCook, ...activeCook];
+    
     const totalTime = Math.max(...[...tracks.prep, ...tracks.cook, ...tracks.clean].map(s => s.end || 0));
 
     return {
