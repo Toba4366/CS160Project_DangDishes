@@ -85,7 +85,10 @@ function Timeline() {
       let currentTime = startTime;
       
       steps.forEach(s => {
-        if (allowOverlap && s.canOverlap) {
+        // If step already has a calculated start time (from Reagent), use it
+        if (s.start !== undefined && parsedByLLM) {
+          // Keep the pre-calculated start time from Reagent
+        } else if (allowOverlap && s.canOverlap) {
           // For parallel prep tasks, try to start as early as possible
           s.start = startTime;
         } else {
@@ -94,7 +97,11 @@ function Timeline() {
         
         let rowIdx = rows.findIndex(r => r.length === 0 || r[r.length - 1].end <= s.start);
         if (rowIdx === -1) { rows.push([]); rowIdx = rows.length - 1; }
-        s.end = s.start + s.duration;
+        
+        // Recalculate end if not already set
+        if (s.end === undefined || !parsedByLLM) {
+          s.end = s.start + s.duration;
+        }
         s.row = rowIdx;
         rows[rowIdx].push(s);
         
@@ -103,6 +110,13 @@ function Timeline() {
       return currentTime;
     };
 
+    // When using LLM data, sort steps by their calculated start times
+    if (parsedByLLM) {
+      tracks.prep.sort((a, b) => (a.start || 0) - (b.start || 0));
+      tracks.cook.sort((a, b) => (a.start || 0) - (b.start || 0));
+      tracks.clean.sort((a, b) => (a.start || 0) - (b.start || 0));
+    }
+    
     // Schedule prep with parallel task support
     let time = scheduleTrack(tracks.prep, 0, true);
     

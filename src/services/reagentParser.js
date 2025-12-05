@@ -99,13 +99,59 @@ export function convertReagentToTimeline(reagentData) {
   }
 
   console.log(`📊 Converting ${reagentData.steps.length} steps from Reagent`);
+  
+  // First pass: Calculate start times based on dependencies
+  const stepMap = new Map();
+  reagentData.steps.forEach(step => {
+    stepMap.set(step.id, { ...step, calculatedStart: 0 });
+  });
+  
+  // Calculate start times recursively
+  const calculateStartTime = (stepId, visited = new Set()) => {
+    if (visited.has(stepId)) return 0; // Circular dependency protection
+    visited.add(stepId);
+    
+    const step = stepMap.get(stepId);
+    if (!step) return 0;
+    if (step.calculatedStart > 0) return step.calculatedStart;
+    
+    let earliestStart = 0;
+    if (step.dependencies && step.dependencies.length > 0) {
+      step.dependencies.forEach(depId => {
+        const depStep = stepMap.get(depId);
+        if (depStep) {
+          const depStart = calculateStartTime(depId, visited);
+          const depEnd = depStart + (depStep.duration || 0);
+          earliestStart = Math.max(earliestStart, depEnd);
+        }
+      });
+    }
+    
+    step.calculatedStart = earliestStart;
+    return earliestStart;
+  };
+  
+  reagentData.steps.forEach(step => calculateStartTime(step.id));
+  
+  // Second pass: Create timeline steps with calculated start times
   const tracks = { prep: [], cook: [], clean: [] };
+  const skipLabels = ['enjoy', 'enjoy!', 'serve', 'serve hot', 'plate', 'dish up'];
 
   reagentData.steps.forEach((step, idx) => {
+    const stepData = stepMap.get(step.id);
+    
+    // Skip "enjoy" and "serve" steps - they're not actionable
+    if (skipLabels.some(label => step.text.toLowerCase().includes(label))) {
+      console.log(`⏭️ Skipping non-actionable step: ${step.text}`);
+      return;
+    }
+    
     const timelineStep = {
       id: step.id || `step-${idx + 1}`,
       label: step.text,
       duration: step.duration || 3,
+      start: stepData.calculatedStart,
+      end: stepData.calculatedStart + (step.duration || 3),
       passive: step.category === 'passive_cook',
       canOverlap: step.canOverlap || false,
       dependencies: step.dependencies || [],
