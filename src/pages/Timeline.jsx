@@ -32,10 +32,10 @@ function Timeline() {
       if (cookingVerbs.some(v => lower.includes(v))) return 8;
       return 3;
     };
-
+    
     const isPassive = (text) => {
       const lower = text.toLowerCase();
-      return passiveVerbs.some(v => lower.includes(v)) || lower.includes('until');
+      return passiveVerbs.some(v => lower.includes(v)) || lower.includes('until') || lower.includes('preheat');
     };
 
     let stepId = 1;
@@ -48,13 +48,11 @@ function Timeline() {
         const lower = sentence.toLowerCase();
         const step = { id: `step-${stepId++}`, label: sentence.trim(), duration, passive: isPassive(sentence) };
         
-        if (lower.includes('preheat')) tracks.prep.push(step);
-        else if (isPassive(sentence)) tracks.cook.push(step);
+        if (isPassive(sentence)) tracks.cook.push(step);
         else if (cookingVerbs.some(v => lower.includes(v)) || activeVerbs.some(v => lower.includes(v))) tracks.cook.push(step);
         else tracks.prep.push(step);
       }
     }
-
     tools.forEach(tool => {
       tracks.clean.push({ id: `step-${stepId++}`, label: `Wash ${tool}`, duration: 2 });
     });
