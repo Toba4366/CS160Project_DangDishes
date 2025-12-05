@@ -203,9 +203,21 @@ export const recipeService = {
   /**
    * Add a recipe to cooking history
    * @param {Object} recipe - Recipe object to add
+   * @param {Object} llmParsedData - Optional LLM-parsed timeline data to cache
    * @returns {Promise<Object>} Success response with recipe
    */
-  addToHistory: async (recipe) => {
+  addToHistory: async (recipe, llmParsedData = null) => {
+    // Cache LLM data if provided (saves API tokens on subsequent loads)
+    if (llmParsedData) {
+      const cacheKey = `timeline_${recipe.name || recipe.url}`;
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(llmParsedData));
+        console.log('💾 Cached LLM timeline data for', recipe.name);
+      } catch (error) {
+        console.warn('Failed to cache timeline data:', error);
+      }
+    }
+    
     const hasBackend = await checkBackendHealth();
     
     if (hasBackend) {
@@ -218,6 +230,25 @@ export const recipeService = {
     } else {
       return recipeService.updateLocalStorageHistory(recipe);
     }
+  },
+
+  /**
+   * Get cached LLM timeline data for a recipe
+   * @param {string} recipeNameOrUrl - Recipe name or URL
+   * @returns {Object|null} Cached timeline data or null
+   */
+  getCachedTimeline: (recipeNameOrUrl) => {
+    const cacheKey = `timeline_${recipeNameOrUrl}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        console.log('💰 Using cached LLM timeline data (saving API tokens!)');
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      console.warn('Failed to retrieve cached timeline:', error);
+    }
+    return null;
   },
 
   /**
