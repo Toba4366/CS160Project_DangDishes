@@ -69,8 +69,14 @@ function Loading() {
       // If going to timeline, parse with Reagent first
       let llmParsedData = null;
       if (nextPage === 'timeline' && finalRecipeData) {
-        console.log('🚀 Calling Reagent during loading screen...');
-        try {
+        // Check cache first to save API tokens
+        const cached = recipeService.getCachedTimeline(recipeName || finalRecipeData.url);
+        if (cached) {
+          llmParsedData = cached;
+          console.log('💰 Using cached timeline data - no API call needed!');
+        } else {
+          console.log('🚀 Calling Reagent during loading screen...');
+          try {
           const instructions = finalRecipeData?.instructions || finalRecipeData?.recipeText;
           const tools = finalRecipeData?.tools || [];
           
@@ -83,15 +89,27 @@ function Loading() {
             if (result) {
               llmParsedData = convertReagentToTimeline(result);
               console.log('✅ Reagent parsing complete during loading!');
+              
+              // Cache for future use (saves API tokens)
+              const cacheKey = recipeName || finalRecipeData.url;
+              if (cacheKey) {
+                try {
+                  localStorage.setItem(`timeline_${cacheKey}`, JSON.stringify(llmParsedData));
+                  console.log('💾 Cached LLM timeline data');
+                } catch (e) {
+                  console.warn('Failed to cache:', e);
+                }
+              }
             }
           }
         } catch (error) {
           console.error('Reagent parsing failed during loading:', error);
           // Continue anyway with fallback
         }
+        }
       }
 
-      // Ensure minimum 2.5 seconds on loading screen
+      // Ensure minimum total time on loading screen (including Reagent parsing)
       const elapsed = Date.now() - startTime;
       const remainingTime = Math.max(0, (scrapingFailed ? 1000 : 2500) - elapsed);
       if (remainingTime > 0) {

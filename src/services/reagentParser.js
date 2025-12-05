@@ -3,8 +3,10 @@
  * Uses Reagent AI to intelligently parse recipes into structured timeline data
  */
 
-const REAGENT_NOGGIN_URL = 'https://noggin.rea.gent/liquid-marten-8702';
-const REAGENT_API_KEY = 'rg_v1_wesfhasaze9zsrptmrc90wet1zl0o25jrahw_ngk';
+const REAGENT_NOGGIN_URL = import.meta.env.VITE_REAGENT_NOGGIN_URL || 'https://noggin.rea.gent/liquid-marten-8702';
+const REAGENT_API_KEY = import.meta.env.VITE_REAGENT_API_KEY || 'rg_v1_wesfhasaze9zsrptmrc90wet1zl0o25jrahw_ngk';
+const MAX_COMPLETION_LENGTH = 16048; // Maximum tokens for Reagent response
+const NON_ACTIONABLE_STEPS = ['enjoy', 'enjoy!', 'serve', 'serve hot', 'plate', 'dish up'];
 
 /**
  * Parse recipe instructions using Reagent Noggin
@@ -28,7 +30,7 @@ ${instructionsText}`;
 
   const requestBody = {
     input: inputText,
-    "maximum-completion-length": 16048,
+    "maximum-completion-length": MAX_COMPLETION_LENGTH, // API expects kebab-case
   };
 
   console.log('🤖 Sending to Reagent noggin:', {
@@ -53,7 +55,7 @@ ${instructionsText}`;
     if (!response.ok) {
       const error = await response.text();
       console.error('❌ Reagent API error response:', error);
-      throw new Error(`Reagent API error: ${error || response.statusText}`);
+      throw new Error(`Reagent API request failed (${response.status}): ${error || response.statusText}`);
     }
 
     const responseText = await response.text();
@@ -106,10 +108,16 @@ export function convertReagentToTimeline(reagentData) {
     stepMap.set(step.id, { ...step, calculatedStart: 0 });
   });
   
+  // Shared visited set for circular dependency detection across all recursion
+  const globalVisited = new Set();
+  
   // Calculate start times recursively
-  const calculateStartTime = (stepId, visited = new Set()) => {
-    if (visited.has(stepId)) return 0; // Circular dependency protection
-    visited.add(stepId);
+  const calculateStartTime = (stepId) => {
+    if (globalVisited.has(stepId)) {
+      console.warn(`⚠️ Circular dependency detected for step ${stepId}`);
+      return 0;
+    }
+    globalVisited.add(stepId);
     
     const step = stepMap.get(stepId);
     if (!step) return 0;
@@ -120,7 +128,7 @@ export function convertReagentToTimeline(reagentData) {
       step.dependencies.forEach(depId => {
         const depStep = stepMap.get(depId);
         if (depStep) {
-          const depStart = calculateStartTime(depId, visited);
+          const depStart = calculateStartTime(depId);
           const depEnd = depStart + (depStep.duration || 0);
           earliestStart = Math.max(earliestStart, depEnd);
         }
@@ -135,13 +143,12 @@ export function convertReagentToTimeline(reagentData) {
   
   // Second pass: Create timeline steps with calculated start times
   const tracks = { prep: [], cook: [], clean: [] };
-  const skipLabels = ['enjoy', 'enjoy!', 'serve', 'serve hot', 'plate', 'dish up'];
 
   reagentData.steps.forEach((step, idx) => {
     const stepData = stepMap.get(step.id);
     
-    // Skip "enjoy" and "serve" steps - they're not actionable
-    if (skipLabels.some(label => step.text.toLowerCase().includes(label))) {
+    // Skip non-actionable steps (enjoy, serve, etc.)
+    if (NON_ACTIONABLE_STEPS.some(label => step.text.toLowerCase().includes(label))) {
       console.log(`⏭️ Skipping non-actionable step: ${step.text}`);
       return;
     }
@@ -172,6 +179,7 @@ export function convertReagentToTimeline(reagentData) {
         tracks.clean.push(timelineStep);
         break;
       default:
+        console.warn(`⚠️ Unknown step category "${step.category}", defaulting to prep track`);
         tracks.prep.push(timelineStep);
     }
   });

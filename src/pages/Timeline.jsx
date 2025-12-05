@@ -112,9 +112,9 @@ function Timeline() {
 
     // When using LLM data, sort steps by their calculated start times
     if (parsedByLLM) {
-      tracks.prep.sort((a, b) => (a.start || 0) - (b.start || 0));
-      tracks.cook.sort((a, b) => (a.start || 0) - (b.start || 0));
-      tracks.clean.sort((a, b) => (a.start || 0) - (b.start || 0));
+      tracks.prep = [...tracks.prep].sort((a, b) => (a.start || 0) - (b.start || 0));
+      tracks.cook = [...tracks.cook].sort((a, b) => (a.start || 0) - (b.start || 0));
+      tracks.clean = [...tracks.clean].sort((a, b) => (a.start || 0) - (b.start || 0));
     }
     
     // Schedule prep with parallel task support
