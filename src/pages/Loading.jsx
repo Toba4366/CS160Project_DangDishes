@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
+import { parseRecipeWithReagent, convertReagentToTimeline } from '../services/reagentParser';
 import './Loading.css';
 
 const cookingTips = [
@@ -21,6 +22,7 @@ function Loading() {
   const navigate = useNavigate();
   const { recipeName, nextPage, recipeData, fromPage, filters } = location.state || {};
   const [scrapingFailed, setScrapingFailed] = useState(false);
+  const hasNavigated = useRef(false);
   
   const randomTip = cookingTips[Math.floor(Math.random() * cookingTips.length)];
 
@@ -34,6 +36,10 @@ function Loading() {
 
   useEffect(() => {
     const fetchDataAndNavigate = async () => {
+      // Prevent multiple navigations from React Strict Mode
+      if (hasNavigated.current) return;
+      hasNavigated.current = true;
+      
       let finalRecipeData = recipeData;
       let scrapingFailed = false;
 
@@ -57,8 +63,40 @@ function Loading() {
         }
       }
 
-      // Wait minimum 2.5 seconds for better UX (or longer if showing error)
-      await new Promise(resolve => setTimeout(resolve, scrapingFailed ? 1000 : 2500));
+      // Start timing for minimum loading screen duration
+      const startTime = Date.now();
+
+      // If going to timeline, parse with Reagent first
+      let llmParsedData = null;
+      if (nextPage === 'timeline' && finalRecipeData) {
+        console.log('🚀 Calling Reagent during loading screen...');
+        try {
+          const instructions = finalRecipeData?.instructions || finalRecipeData?.recipeText;
+          const tools = finalRecipeData?.tools || [];
+          
+          if (instructions) {
+            const result = await parseRecipeWithReagent(instructions, tools, {
+              dishName: recipeName,
+              servings: finalRecipeData?.servings
+            });
+            
+            if (result) {
+              llmParsedData = convertReagentToTimeline(result);
+              console.log('✅ Reagent parsing complete during loading!');
+            }
+          }
+        } catch (error) {
+          console.error('Reagent parsing failed during loading:', error);
+          // Continue anyway with fallback
+        }
+      }
+
+      // Ensure minimum 2.5 seconds on loading screen
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, (scrapingFailed ? 1000 : 2500) - elapsed);
+      if (remainingTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
 
       // If scraping failed, don't navigate - show error message
       if (scrapingFailed) {
@@ -67,7 +105,15 @@ function Loading() {
 
       // Navigate to next page
       if (nextPage === 'timeline') {
-        navigate('/timeline', { state: { recipeName, recipeData: finalRecipeData, fromPage }, replace: true });
+        navigate('/timeline', { 
+          state: { 
+            recipeName, 
+            recipeData: finalRecipeData, 
+            fromPage,
+            llmParsedData // Pass pre-fetched Reagent data
+          }, 
+          replace: true 
+        });
       } else if (nextPage === 'search-results') {
         navigate('/search-results', { state: { recipeName, recipeData: finalRecipeData, fromPage, filters }, replace: true });
       } else {

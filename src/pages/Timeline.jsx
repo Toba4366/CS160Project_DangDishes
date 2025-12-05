@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
 import { prepVerbs, cookingVerbs, passiveVerbs, activeVerbs } from '../constants/recipeVerbs';
@@ -7,63 +7,90 @@ import './Timeline.css';
 function Timeline() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { recipeName, recipeData, fromPage } = location.state || {};
+  const { recipeName, recipeData, fromPage, llmParsedData: preFetchedLLM } = location.state || {};
   
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [parsedByLLM, setParsedByLLM] = useState(!!preFetchedLLM);
+  const [llmParsedData, setLlmParsedData] = useState(preFetchedLLM || null);
+
+  // Initialize with pre-fetched data from loading screen
+  useEffect(() => {
+    if (preFetchedLLM) {
+      console.log('✅ Using pre-fetched Reagent data from loading screen:', preFetchedLLM);
+    } else {
+      console.log('⚠️ No pre-fetched Reagent data - will use keyword fallback');
+    }
+  }, []);
 
   const timelineData = useMemo(() => {
-    const mockInstructions = [
-      "Preheat oven to 350 degrees F. Lightly grease cookie sheets.",
-      "In a large bowl, mix cake mix, pudding, and oats. Add oil and water; mix until smooth.",
-      "Bake for 8 to 10 minutes. Cool on baking sheet for 5 minutes."
-    ];
+    // Determine which tracks to use: LLM-parsed or keyword-based
+    let tracks;
     
-    const instructions = recipeData?.instructions || recipeData?.recipeText || mockInstructions;
-    const tools = recipeData?.tools || ['Pan', 'Bowl', 'Spatula'];
-    
-    const extractDuration = (text) => {
-      const lower = text.toLowerCase();
-      const match = lower.match(/(\d+)\s*(?:to|-)\s*(\d+)\s*(?:minutes?|min)/i) || lower.match(/(\d+)\s*(?:minutes?|min)/i);
-      if (match) return match[2] ? Math.round((parseInt(match[1]) + parseInt(match[2])) / 2) : parseInt(match[1]);
-      if (passiveVerbs.some(v => lower.includes(v))) return 5;
-      if (prepVerbs.some(v => lower.includes(v))) return 3;
-      if (cookingVerbs.some(v => lower.includes(v))) return 8;
-      return 3;
-    };
-    
-    const isPassive = (text) => {
-      const lower = text.toLowerCase();
-      return passiveVerbs.some(v => lower.includes(v)) || lower.includes('until') || lower.includes('preheat');
-    };
+    if (llmParsedData?.tracks) {
+      // Use LLM-parsed tracks
+      console.log('🤖 Using Reagent LLM-parsed tracks:', llmParsedData.tracks);
+      tracks = llmParsedData.tracks;
+    } else {
+      // Fall back to keyword-based parsing
+      console.log('🔤 Using keyword-based fallback parsing');
+      const mockInstructions = [
+        "Preheat oven to 350 degrees F. Lightly grease cookie sheets.",
+        "In a large bowl, mix cake mix, pudding, and oats. Add oil and water; mix until smooth.",
+        "Bake for 8 to 10 minutes. Cool on baking sheet for 5 minutes."
+      ];
+      
+      const instructions = recipeData?.instructions || recipeData?.recipeText || mockInstructions;
+      const tools = recipeData?.tools || ['Pan', 'Bowl', 'Spatula'];
+      
+      const extractDuration = (text) => {
+        const lower = text.toLowerCase();
+        const match = lower.match(/(\d+)\s*(?:to|-)\s*(\d+)\s*(?:minutes?|min)/i) || lower.match(/(\d+)\s*(?:minutes?|min)/i);
+        if (match) return match[2] ? Math.round((parseInt(match[1]) + parseInt(match[2])) / 2) : parseInt(match[1]);
+        if (passiveVerbs.some(v => lower.includes(v))) return 5;
+        if (prepVerbs.some(v => lower.includes(v))) return 3;
+        if (cookingVerbs.some(v => lower.includes(v))) return 8;
+        return 3;
+      };
 
-    let stepId = 1;
-    const tracks = { prep: [], cook: [], clean: [] };
-    
-    for (const line of instructions) {
-      for (const sentence of line.split(/\.\s+/)) {
-        if (!sentence.trim() || sentence.length < 10) continue;
-        const duration = extractDuration(sentence);
-        const lower = sentence.toLowerCase();
-        const step = { id: `step-${stepId++}`, label: sentence.trim(), duration, passive: isPassive(sentence) };
-        
-        if (isPassive(sentence)) tracks.cook.push(step);
-        else if (cookingVerbs.some(v => lower.includes(v)) || activeVerbs.some(v => lower.includes(v))) tracks.cook.push(step);
-        else tracks.prep.push(step);
+      const isPassive = (text) => {
+        const lower = text.toLowerCase();
+        return passiveVerbs.some(v => lower.includes(v)) || lower.includes('until') || lower.includes('preheat');
+      };
+
+      let stepId = 1;
+      tracks = { prep: [], cook: [], clean: [] };
+      
+      for (const line of instructions) {
+        for (const sentence of line.split(/\.\s+/)) {
+          if (!sentence.trim() || sentence.length < 10) continue;
+          const duration = extractDuration(sentence);
+          const lower = sentence.toLowerCase();
+          const step = { id: `step-${stepId++}`, label: sentence.trim(), duration, passive: isPassive(sentence) };
+          
+          if (isPassive(sentence)) tracks.cook.push(step);
+          else if (cookingVerbs.some(v => lower.includes(v)) || activeVerbs.some(v => lower.includes(v))) tracks.cook.push(step);
+          else tracks.prep.push(step);
+        }
       }
+      tools.forEach(tool => {
+        tracks.clean.push({ id: `step-${stepId++}`, label: `Wash ${tool}`, duration: 2 });
+      });
     }
-    tools.forEach(tool => {
-      tracks.clean.push({ id: `step-${stepId++}`, label: `Wash ${tool}`, duration: 2 });
-    });
 
-    // Schedule with row assignment for overlaps
-    const scheduleTrack = (steps, startTime = 0) => {
+    // Schedule with row assignment for overlaps (handles sequential and parallel tasks)
+    const scheduleTrack = (steps, startTime = 0, allowOverlap = false) => {
       const rows = [[]];
       let currentTime = startTime;
       
       steps.forEach(s => {
-        s.start = currentTime;
+        if (allowOverlap && s.canOverlap) {
+          // For parallel prep tasks, try to start as early as possible
+          s.start = startTime;
+        } else {
+          s.start = currentTime;
+        }
         
         let rowIdx = rows.findIndex(r => r.length === 0 || r[r.length - 1].end <= s.start);
         if (rowIdx === -1) { rows.push([]); rowIdx = rows.length - 1; }
@@ -71,12 +98,13 @@ function Timeline() {
         s.row = rowIdx;
         rows[rowIdx].push(s);
         
-        if (!s.passive) currentTime = s.end;
+        if (!s.passive && !s.canOverlap) currentTime = s.end;
       });
       return currentTime;
     };
 
-    let time = scheduleTrack(tracks.prep, 0);
+    // Schedule prep with parallel task support
+    let time = scheduleTrack(tracks.prep, 0, true);
     
     // Schedule passive cook steps early to overlap with prep
     const passiveCook = tracks.cook.filter(s => s.passive);
@@ -122,15 +150,18 @@ function Timeline() {
 
     return {
       title: recipeName || 'Recipe',
-      totalTime: recipeData?.time || Math.ceil(totalTime) || 15,
+      totalTime: llmParsedData?.totalTime || recipeData?.time || Math.ceil(totalTime) || 15,
       dishes: recipeData?.dishes || 3,
       tracks: [
         { id: 'prep', label: 'Prep', color: '#FF6663', steps: tracks.prep },
         { id: 'cook', label: 'Cook', color: '#9EC1CF', steps: tracks.cook },
         { id: 'clean', label: 'Clean', color: '#FEB144', steps: tracks.clean }
-      ].filter(t => t.steps.length > 0)
+      ].filter(t => t.steps.length > 0),
+      parsedByLLM,
+      llmNotes: llmParsedData?.notes,
+      llmTips: llmParsedData?.parallelizationTips
     };
-  }, [recipeName, recipeData]);
+  }, [recipeName, recipeData, llmParsedData, parsedByLLM]);
 
   const allSteps = timelineData.tracks.flatMap(t => t.steps);
   const progressPercent = allSteps.length > 0 ? (completedSteps.size / allSteps.length) * 100 : 0;
@@ -162,6 +193,7 @@ function Timeline() {
           <div className="meta-tags">
             <span>{timelineData.totalTime} min</span>
             <span>{timelineData.dishes} dishes</span>
+            {parsedByLLM && <span>✨ AI optimized</span>}
           </div>
         </div>
         {recipeData?.needsSaving && (
@@ -178,6 +210,22 @@ function Timeline() {
 
       <div className="timeline-instructions">
         <p>Tap on step markers to mark them as complete.</p>
+        {timelineData.llmTips && timelineData.llmTips.length > 0 && (
+          <div className="llm-tips">
+            <strong>💡 Multitasking Tips:</strong>
+            <ul>
+              {timelineData.llmTips.map((tip, i) => <li key={i}>{tip}</li>)}
+            </ul>
+          </div>
+        )}
+        {timelineData.llmNotes && timelineData.llmNotes.length > 0 && (
+          <div className="llm-notes">
+            <strong>⚠️ Important Notes:</strong>
+            <ul>
+              {timelineData.llmNotes.map((note, i) => <li key={i}>{note}</li>)}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className="timeline-container">
