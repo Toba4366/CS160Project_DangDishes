@@ -31,14 +31,41 @@ function SearchResults() {
           recipeService.getHistory()
         ]);
 
-        setWebRecipes(webData.recipes || []);
-        
-        // Filter history to only show recipes with the searched ingredients
+        // Apply filters to web recipes
+        const filteredWebRecipes = (webData.recipes || []).filter(recipe => {
+          // Filter by cooking time
+          const recipeTime = recipe.time || 0;
+          const timeMatch = recipeTime >= (filters?.minTime || 0) &&
+            recipeTime <= (filters?.maxTime || 60);
+
+          // Filter by number of dishes
+          const recipeDishes = recipe.dishes || 0;
+          const dishesMatch = recipeDishes >= (filters?.minDishes || 1) &&
+            recipeDishes <= (filters?.maxDishes || 10);
+
+          return timeMatch && dishesMatch;
+        });
+        setWebRecipes(filteredWebRecipes);
+
+        // Filter history to only show recipes with the searched ingredients and filters
         const filteredHistory = (historyData.recipes || []).filter(recipe => {
+          // Filter by ingredients
           const recipeName = recipe.name?.toLowerCase() || '';
-          return searchedIngredients.some(ingredient => 
+          const ingredientMatch = searchedIngredients.some(ingredient =>
             recipeName.includes(ingredient.toLowerCase())
           );
+
+          // Filter by cooking time
+          const recipeTime = recipe.time || 0;
+          const timeMatch = recipeTime >= (filters?.minTime || 0) &&
+            recipeTime <= (filters?.maxTime || 60);
+
+          // Filter by number of dishes
+          const recipeDishes = recipe.dishes || 0;
+          const dishesMatch = recipeDishes >= (filters?.minDishes || 1) &&
+            recipeDishes <= (filters?.maxDishes || 10);
+
+          return ingredientMatch && timeMatch && dishesMatch;
         });
         setHistoryRecipes(filteredHistory);
       } catch (err) {
@@ -72,13 +99,13 @@ function SearchResults() {
       }
     }
 
-    navigate('/loading', { 
-      state: { 
+    navigate('/loading', {
+      state: {
         recipeName: recipe.name,
         nextPage: 'mise-en-place',
         recipeData: fullRecipeData,
         fromPage: 'search-results'
-      } 
+      }
     });
   };
 
@@ -114,16 +141,16 @@ function SearchResults() {
 
       <h1>Search Results</h1>
 
-      <button 
+      <button
         className="filter-toggle"
         onClick={() => setShowFilters(!showFilters)}
       >
-        {showFilters ? '▲' : '▼'} Adjust Filters
+        {showFilters ? '▲' : '▼'} Selected Filters
       </button>
 
       {showFilters && (
         <div className="filters-dropdown">
-          <p>Filters: {filters?.selectedIngredients?.join(', ') || 'None'}</p>
+          <p>Ingredients: {filters?.selectedIngredients?.join(', ') || 'None'}</p>
           <p>Time: {filters?.minTime || 0} - {filters?.maxTime || 60} min</p>
           <p>Dishes: {filters?.minDishes || 1} - {filters?.maxDishes || 10}</p>
         </div>
@@ -134,8 +161,8 @@ function SearchResults() {
           <h2>Your Previous Recipes</h2>
           <div className="recipe-list">
             {historyRecipes.map(recipe => (
-              <button 
-                key={recipe.id} 
+              <button
+                key={recipe.id}
                 className="recipe-button"
                 onClick={() => handleRecipeClick(recipe)}
               >
@@ -154,8 +181,8 @@ function SearchResults() {
           <h2>Recipes from the Web</h2>
           <div className="recipe-list">
             {webRecipes.map(recipe => (
-              <button 
-                key={recipe.id} 
+              <button
+                key={recipe.id}
                 className="recipe-button"
                 onClick={() => handleRecipeClick(recipe)}
               >
