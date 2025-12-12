@@ -44,7 +44,7 @@ Simple, clean interface with three main actions:
 
 Based on Figma prototype with:
 - Clean white background
-- Light green (#90ee90) accent color
+- Light green (#B3E59A) accent color
 - Handwritten-style font for friendly feel
 - Mobile-first with landscape timeline support
 

@@ -1,6 +1,6 @@
 :root {
   /* Light green color matching Figma design */
-  --primary-green: #90ee90;
+  --primary-green: #B3E59A;
   
   /* Handwritten-style font similar to Comic Sans but more legible */
   font-family: 'Comic Sans MS', 'Chalkboard SE', 'Bradley Hand', cursive, sans-serif;
@@ -22,7 +22,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: white;
+  background-color: floralwhite;
   color: black;
 }
 
