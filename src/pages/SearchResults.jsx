@@ -99,12 +99,16 @@ function SearchResults() {
       }
     }
 
+    // Attach current filters so downstream pages can restore the search
+    const recipeWithFilters = { ...fullRecipeData, filters };
+
     navigate('/loading', {
       state: {
         recipeName: recipe.name,
         nextPage: 'mise-en-place',
-        recipeData: fullRecipeData,
-        fromPage: 'search-results'
+        recipeData: recipeWithFilters,
+        fromPage: 'search-results',
+        filters
       }
     });
   };
