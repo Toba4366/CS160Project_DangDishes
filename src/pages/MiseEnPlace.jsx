@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
 import './MiseEnPlace.css';
@@ -24,31 +24,87 @@ function MiseEnPlace() {
   ];
 
   // Extract tools and ingredients from recipeData if available
-  const recipeTools = recipeData?.tools?.map((tool, idx) => ({
-    id: `t${idx}`,
-    name: typeof tool === 'string' ? tool : tool.name,
-    checked: false
-  })) || defaultTools;
+  const recipeTools = useMemo(() => (
+    recipeData?.tools?.map((tool, idx) => ({
+      id: `t${idx}`,
+      name: typeof tool === 'string' ? tool : tool.name,
+      checked: false
+    })) || defaultTools
+  ), [recipeData]);
 
-  const recipeIngredients = recipeData?.ingredients?.map((ing, idx) => ({
-    id: `i${idx}`,
-    name: typeof ing === 'string' ? ing : ing.name,
-    checked: false
-  })) || defaultIngredients;
+  const recipeIngredients = useMemo(() => (
+    recipeData?.ingredients?.map((ing, idx) => ({
+      id: `i${idx}`,
+      name: typeof ing === 'string' ? ing : ing.name,
+      checked: false
+    })) || defaultIngredients
+  ), [recipeData]);
+
+  const storageKey = useMemo(() => {
+    const identifier = recipeData?.id || recipeData?.url || recipeName;
+    return `mise-en-place:${identifier || 'default'}`;
+  }, [recipeData?.id, recipeData?.url, recipeName]);
 
   const [tools, setTools] = useState(recipeTools);
   const [ingredients, setIngredients] = useState(recipeIngredients);
+  const [hydrated, setHydrated] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const mergeCheckedState = (baseList, savedList) => {
+    if (!Array.isArray(savedList)) return baseList;
+    return baseList.map(item => {
+      const match = savedList.find(saved => saved.id === item.id || saved.name === item.name);
+      return match ? { ...item, checked: !!match.checked } : item;
+    });
+  };
+
+  // Reset lists when recipe changes
+  useEffect(() => {
+    setHydrated(false);
+    setTools(recipeTools);
+    setIngredients(recipeIngredients);
+  }, [recipeData]);
+
+  // Hydrate checkboxes from localStorage
+  useEffect(() => {
+    try {
+      const savedState = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      setTools(mergeCheckedState(recipeTools, savedState.tools));
+      setIngredients(mergeCheckedState(recipeIngredients, savedState.ingredients));
+    } catch (err) {
+      console.error('Failed to load mise en place state', err);
+      setTools(recipeTools);
+      setIngredients(recipeIngredients);
+    } finally {
+      setHydrated(true);
+    }
+  }, [storageKey, recipeTools, recipeIngredients]);
+
+  // Persist checkbox state
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          tools: tools.map(({ id, name, checked }) => ({ id, name, checked })),
+          ingredients: ingredients.map(({ id, name, checked }) => ({ id, name, checked }))
+        })
+      );
+    } catch (err) {
+      console.error('Failed to save mise en place state', err);
+    }
+  }, [tools, ingredients, storageKey, hydrated]);
+
   const toggleTool = (id) => {
-    setTools(tools.map(tool => 
+    setTools(prevTools => prevTools.map(tool => 
       tool.id === id ? { ...tool, checked: !tool.checked } : tool
     ));
   };
 
   const toggleIngredient = (id) => {
-    setIngredients(ingredients.map(ingredient => 
+    setIngredients(prevIngredients => prevIngredients.map(ingredient => 
       ingredient.id === id ? { ...ingredient, checked: !ingredient.checked } : ingredient
     ));
   };
