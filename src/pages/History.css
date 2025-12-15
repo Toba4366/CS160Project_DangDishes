@@ -24,7 +24,8 @@
 
 .recipe-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 8px;
 }
 
@@ -36,7 +37,7 @@
   cursor: pointer;
   text-align: left;
   transition: transform 0.2s;
-  width: 100%;
+  flex: 1;
 }
 
 .recipe-button:hover:not(:disabled) {
@@ -52,18 +53,23 @@
 .recipe-actions {
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex-shrink: 0;
 }
 
 .edit-button,
 .delete-button {
-  padding: 8px 16px;
+  padding: 10px 14px;
   border: none;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
+  white-space: nowrap;
+  min-width: 110px;
+  text-align: center;
 }
 
 .edit-button {
