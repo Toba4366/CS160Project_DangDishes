@@ -238,8 +238,10 @@ function Loading() {
         });
       } else if (nextPage === 'search-results') {
         navigate('/search-results', { state: { recipeName, recipeData: finalRecipeData, fromPage, filters }, replace: true });
+      } else if (nextPage === 'mise-en-place') {
+        navigate('/recipe-preview', { state: { recipeName, recipeData: finalRecipeData, fromPage, llmParsedData }, replace: true });
       } else {
-        navigate('/mise-en-place', { state: { recipeName, recipeData: finalRecipeData, fromPage }, replace: true });
+        navigate('/recipe-preview', { state: { recipeName, recipeData: finalRecipeData, fromPage, llmParsedData }, replace: true });
       }
     };
 

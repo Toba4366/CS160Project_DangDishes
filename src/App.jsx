@@ -6,6 +6,7 @@ import RecipeSearch from './pages/RecipeSearch';
 import SearchResults from './pages/SearchResults';
 import History from './pages/History';
 import EditRecipe from './pages/EditRecipe';
+import RecipePreview from './pages/RecipePreview';
 import MiseEnPlace from './pages/MiseEnPlace';
 import Timeline from './pages/Timeline';
 import Loading from './pages/Loading';
@@ -22,6 +23,7 @@ function App() {
           <Route path="search-results" element={<SearchResults />} />
           <Route path="history" element={<History />} />
           <Route path="edit-recipe" element={<EditRecipe />} />
+          <Route path="recipe-preview" element={<RecipePreview />} />
           <Route path="mise-en-place" element={<MiseEnPlace />} />
           <Route path="timeline" element={<Timeline />} />
           <Route path="loading" element={<Loading />} />
