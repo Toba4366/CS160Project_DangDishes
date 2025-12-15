@@ -9,6 +9,42 @@ const MAX_COMPLETION_LENGTH = 16048; // Maximum tokens for Reagent response
 const NON_ACTIONABLE_STEPS = ['enjoy', 'enjoy!', 'serve', 'serve hot', 'plate', 'dish up'];
 
 /**
+ * Preprocess instructions to split multi-sentence steps into clear, atomic steps
+ * @param {string[] | string} instructions - Recipe instructions
+ * @returns {string[]} Processed instruction steps
+ */
+function preprocessInstructions(instructions) {
+  const instructionArray = Array.isArray(instructions) ? instructions : [instructions];
+  const processed = [];
+  
+  instructionArray.forEach(instruction => {
+    const trimmed = instruction.trim();
+    if (!trimmed) return;
+    
+    // Split on sentence boundaries, but preserve coordination
+    // Split on: '. ' (period space), '! ', '? ' but not on decimal numbers or abbreviations
+    const sentences = trimmed.split(/(?<=[.!?])\s+(?=[A-Z])/);
+    
+    // Further split on coordinating conjunctions when there's a clear action break
+    sentences.forEach(sentence => {
+      // Check for compound sentences with 'then', 'and then', 'next'
+      const actionSplits = sentence.split(/(?:\.|,)?\s+(?:then|and then|next)\s+/i);
+      
+      if (actionSplits.length > 1) {
+        actionSplits.forEach(split => {
+          const cleaned = split.trim().replace(/^[,;]\s*/, '');
+          if (cleaned) processed.push(cleaned);
+        });
+      } else {
+        processed.push(sentence.trim());
+      }
+    });
+  });
+  
+  return processed;
+}
+
+/**
  * Parse recipe instructions using Reagent Noggin
  * @param {string[] | string} instructions - Recipe instructions as array or string
  * @param {string[]} tools - List of tools/equipment mentioned in recipe
@@ -16,9 +52,9 @@ const NON_ACTIONABLE_STEPS = ['enjoy', 'enjoy!', 'serve', 'serve hot', 'plate', 
  * @returns {Promise<Object>} Structured recipe data with prep/cook/clean steps
  */
 export async function parseRecipeWithReagent(instructions, tools = [], options = {}) {
-  const instructionsText = Array.isArray(instructions) 
-    ? instructions.join('\n') 
-    : instructions;
+  // Preprocess instructions to split multi-sentence steps
+  const processedInstructions = preprocessInstructions(instructions);
+  const instructionsText = processedInstructions.join('\n');
 
   // Format input as the noggin expects
   const inputText = `Recipe: ${options.dishName || 'Unknown Dish'}
@@ -64,14 +100,22 @@ ${instructionsText}`;
     // Try to extract JSON from response (in case it's wrapped in markdown)
     let jsonText = responseText.trim();
     
-    // Remove markdown code blocks if present
+    // Remove markdown code blocks if present (handle any amount of whitespace)
     if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
+      jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
     } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/```\n?/g, '');
+      jsonText = jsonText.replace(/```\s*/g, '');
     }
-    
-    const data = JSON.parse(jsonText);
+
+    // Parse JSON with better error handling
+    let data;
+    try {
+      data = JSON.parse(jsonText);
+    } catch (jsonError) {
+      console.error('❌ Failed to parse JSON from Reagent response:', jsonError);
+      console.error('❌ Response text that failed to parse:', jsonText.substring(0, 500));
+      return null;
+    }
     console.log('✅ Parsed Reagent data:', data);
     
     return data;
@@ -151,9 +195,10 @@ export function convertReagentToTimeline(reagentData) {
   reagentData.steps.forEach((step, idx) => {
     const stepData = stepMap.get(step.id);
     
-    // Skip non-actionable steps (enjoy, serve, etc.)
-    if (NON_ACTIONABLE_STEPS.some(label => step.text.toLowerCase().includes(label))) {
-      console.log(`⏭️ Skipping non-actionable step: ${step.text}`);
+    // Skip non-actionable steps (enjoy, serve, etc.) - use exact match to avoid false positives
+    const stepTextTrimmed = step.text.trim().toLowerCase();
+    if (NON_ACTIONABLE_STEPS.some(label => stepTextTrimmed === label || stepTextTrimmed.startsWith(label + ' ') || stepTextTrimmed.startsWith(label + '.'))) {
+      console.log(`⏭️  Skipping non-actionable step: "${step.text}"`);
       return;
     }
     
@@ -188,16 +233,81 @@ export function convertReagentToTimeline(reagentData) {
     }
   });
 
-  // Add cleaning steps for tools if not already included
+  // Tools that shouldn't have wash instructions
+  const NON_WASHABLE_TOOLS = [
+    'oven', 'stove', 'stovetop', 'microwave', 'toaster', 'toaster oven',
+    'air fryer', 'slow cooker', 'instant pot', 'pressure cooker',
+    'grill', 'bbq', 'smoker', 'dehydrator',
+    'dishwasher', 'sink', 'faucet', 'tap',
+    'paper towel', 'parchment paper', 'aluminum foil', 'plastic wrap',
+    'cooking spray', 'oil spray', 'pam', 'timer', 'thermometer',
+    'counter', 'countertop', 'table', 'cutting board mat'
+  ];
+
+  // Improved tool detection - extract actual tools from descriptions
+  const extractActualTool = (toolString) => {
+    const lower = toolString.toLowerCase().trim();
+    
+    // Skip if it's a non-washable tool
+    if (NON_WASHABLE_TOOLS.some(nwt => lower === nwt || lower.includes(nwt))) {
+      return null;
+    }
+    
+    // Extract specific tool from phrases like "large mixing bowl" -> "mixing bowl"
+    const toolPatterns = [
+      /(?:large|small|medium|big|heavy|light|deep|shallow|non-stick|cast iron|stainless steel|glass|plastic|wooden|metal)\s+(.+)/i,
+      /(\d+[-\s](?:inch|qt|quart|cup|liter))\s+(.+)/i,
+    ];
+    
+    for (const pattern of toolPatterns) {
+      const match = lower.match(pattern);
+      if (match) {
+        return match[match.length - 1].trim();
+      }
+    }
+    
+    return toolString.trim();
+  };
+
+  // Add cleaning steps for washable tools if not already included
   const existingCleanSteps = tracks.clean.map(s => s.label.toLowerCase());
-  reagentData.tools?.forEach((tool, idx) => {
+  const washableTools = [];
+  
+  reagentData.tools?.forEach((tool) => {
+    const actualTool = extractActualTool(tool);
+    if (actualTool && !washableTools.includes(actualTool.toLowerCase())) {
+      washableTools.push(actualTool);
+    }
+  });
+
+  washableTools.forEach((tool, idx) => {
     const cleanLabel = `Wash ${tool}`;
-    if (!existingCleanSteps.some(label => label.includes(tool.toLowerCase()))) {
+    // Use exact match to avoid false positives
+    if (!existingCleanSteps.some(label => label === cleanLabel.toLowerCase())) {
+      // Determine a sensible default start time: after the last cook or prep step
+      const lastCookOrPrepStep = [...tracks.cook, ...tracks.prep].reduce(
+        (latest, step) => (step.end && step.end > (latest?.end ?? 0)) ? step : latest,
+        null
+      );
+      const cleanStart = lastCookOrPrepStep ? lastCookOrPrepStep.end : 0;
+      
+      // Vary duration based on tool type (pots/pans take longer)
+      const toolLower = tool.toLowerCase();
+      const cleanDuration = (
+        toolLower.includes('pot') || 
+        toolLower.includes('pan') || 
+        toolLower.includes('skillet') || 
+        toolLower.includes('dutch oven')
+      ) ? 3 : 2;
+      
       tracks.clean.push({
         id: `clean-${idx + 1}`,
         label: cleanLabel,
-        duration: 2,
-        passive: false
+        duration: cleanDuration,
+        start: cleanStart,
+        end: cleanStart + cleanDuration,
+        passive: false,
+        dependencies: []
       });
     }
   });

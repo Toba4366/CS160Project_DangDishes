@@ -48,6 +48,11 @@
   font-size: 18px;
   font-weight: bold;
   color: black;
+}
+
+.input-label .required {
+  color: #e74c3c;
+  margin-left: 4px;
   display: flex;
   align-items: center;
   gap: 8px;

@@ -14,6 +14,9 @@ function Timeline() {
   const [saving, setSaving] = useState(false);
   const [parsedByLLM, setParsedByLLM] = useState(!!preFetchedLLM);
   const [llmParsedData, setLlmParsedData] = useState(preFetchedLLM || null);
+  const [layoutOrientation, setLayoutOrientation] = useState(() => {
+    return localStorage.getItem('timeline-layout') || 'horizontal';
+  });
 
   // Initialize with pre-fetched data from loading screen
   useEffect(() => {
@@ -98,8 +101,8 @@ function Timeline() {
         let rowIdx = rows.findIndex(r => r.length === 0 || r[r.length - 1].end <= s.start);
         if (rowIdx === -1) { rows.push([]); rowIdx = rows.length - 1; }
         
-        // Recalculate end if not already set
-        if (s.end === undefined || !parsedByLLM) {
+        // Recalculate end if not already set (preserve pre-calculated values from LLM)
+        if (s.end === undefined) {
           s.end = s.start + s.duration;
         }
         s.row = rowIdx;
@@ -198,6 +201,12 @@ function Timeline() {
   const minWidthPerMin = 60; // pixels per minute minimum
   const timelineMinWidth = Math.max(800, timelineData.totalTime * minWidthPerMin);
 
+  const toggleLayout = () => {
+    const newLayout = layoutOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+    setLayoutOrientation(newLayout);
+    localStorage.setItem('timeline-layout', newLayout);
+  };
+
   return (
     <div className="timeline-page">
       <div className="timeline-header">
@@ -210,11 +219,16 @@ function Timeline() {
             {parsedByLLM && <span>✨ AI optimized</span>}
           </div>
         </div>
-        {recipeData?.needsSaving && (
-          <button className={`save-button ${saved ? 'saved' : ''}`} onClick={handleSave} disabled={saving || saved}>
-            {saved ? '✓ Saved' : saving ? '...' : 'Save'}
+        <div className="timeline-actions">
+          <button className="layout-toggle-button" onClick={toggleLayout} title={`Switch to ${layoutOrientation === 'horizontal' ? 'vertical' : 'horizontal'} layout`}>
+            {layoutOrientation === 'horizontal' ? '⇅ Vertical' : '⇆ Horizontal'}
           </button>
-        )}
+          {recipeData?.needsSaving && (
+            <button className={`save-button ${saved ? 'saved' : ''}`} onClick={handleSave} disabled={saving || saved}>
+              {saved ? '✓ Saved' : saving ? '...' : 'Save'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="progress-section">
@@ -242,7 +256,7 @@ function Timeline() {
         )}
       </div>
 
-      <div className="timeline-container">
+      <div className={`timeline-container ${layoutOrientation}`}>
         <div className="timeline-scroll" style={{ minWidth: timelineMinWidth }}>
           {/* Time Ruler */}
           <div className="time-ruler">

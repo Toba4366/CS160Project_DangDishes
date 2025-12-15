@@ -88,6 +88,7 @@ function History() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const formatLastCooked = (isoString) => {
     if (!isoString) return 'Unknown';
@@ -124,6 +125,34 @@ function History() {
   // Separate uploaded recipes from web recipes
   const uploadedRecipes = history.filter(r => r.source === 'manual');
   const webRecipes = history.filter(r => r.source !== 'manual');
+
+  const handleDelete = async (recipeId, event) => {
+    event.stopPropagation(); // Prevent recipe click
+    
+    if (!confirm('Are you sure you want to delete this recipe from your history?')) {
+      return;
+    }
+
+    setDeletingId(recipeId);
+    try {
+      await recipeService.deleteFromHistory(recipeId);
+      // Update local state to remove the deleted recipe
+      setHistory(history.filter(r => r.id !== recipeId));
+    } catch (err) {
+      console.error('Failed to delete recipe:', err);
+      alert('Failed to delete recipe. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleEdit = (recipe, event) => {
+    event.stopPropagation(); // Prevent recipe click
+    // Navigate to edit page (we'll create this)
+    navigate('/edit-recipe', { 
+      state: { recipe } 
+    });
+  };
 
   const handleRecipeClick = async (recipe) => {
     // If recipe has a URL and doesn't have ingredients/tools, fetch them
@@ -193,19 +222,45 @@ function History() {
           <h2>Your Uploaded Recipes</h2>
           <div className="history-list">
             {uploadedRecipes.map(recipe => (
-              <button 
-                key={recipe.id} 
-                className="recipe-button"
-                onClick={() => handleRecipeClick(recipe)}
-              >
-                <div className="recipe-header">
-                  <div className="recipe-name">{recipe.name}</div>
-                  <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
+              <div key={recipe.id} className="recipe-item">
+                <button 
+                  className="recipe-button"
+                  onClick={() => handleRecipeClick(recipe)}
+                  disabled={deletingId === recipe.id}
+                >
+                  <div className="recipe-header">
+                    <div className="recipe-name">{recipe.name}</div>
+                    <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
+                  </div>
+                  <div className="recipe-details">
+                    {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
+                  </div>
+                  {recipe.nutritionFacts && Object.keys(recipe.nutritionFacts).some(key => recipe.nutritionFacts[key]) && (
+                    <div className="nutrition-preview">
+                      {recipe.nutritionFacts.calories && <span>🔥 {recipe.nutritionFacts.calories} cal</span>}
+                      {recipe.nutritionFacts.protein && <span>💪 {recipe.nutritionFacts.protein}g protein</span>}
+                    </div>
+                  )}
+                </button>
+                <div className="recipe-actions">
+                  <button 
+                    className="edit-button"
+                    onClick={(e) => handleEdit(recipe, e)}
+                    title="Edit recipe"
+                    disabled={deletingId === recipe.id}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button 
+                    className="delete-button"
+                    onClick={(e) => handleDelete(recipe.id, e)}
+                    title="Delete recipe"
+                    disabled={deletingId === recipe.id}
+                  >
+                    {deletingId === recipe.id ? '...' : '🗑️ Delete'}
+                  </button>
                 </div>
-                <div className="recipe-details">
-                  {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
-                </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
@@ -216,19 +271,37 @@ function History() {
           <h2>Recipes from the Web</h2>
           <div className="history-list">
             {webRecipes.map(recipe => (
-              <button 
-                key={recipe.id} 
-                className="recipe-button"
-                onClick={() => handleRecipeClick(recipe)}
-              >
-                <div className="recipe-header">
-                  <div className="recipe-name">{recipe.name}</div>
-                  <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
+              <div key={recipe.id} className="recipe-item">
+                <button 
+                  className="recipe-button"
+                  onClick={() => handleRecipeClick(recipe)}
+                  disabled={deletingId === recipe.id}
+                >
+                  <div className="recipe-header">
+                    <div className="recipe-name">{recipe.name}</div>
+                    <div className="last-cooked">{formatLastCooked(recipe.lastCooked)}</div>
+                  </div>
+                  <div className="recipe-details">
+                    {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
+                  </div>
+                  {recipe.nutritionFacts && Object.keys(recipe.nutritionFacts).some(key => recipe.nutritionFacts[key]) && (
+                    <div className="nutrition-preview">
+                      {recipe.nutritionFacts.calories && <span>🔥 {recipe.nutritionFacts.calories} cal</span>}
+                      {recipe.nutritionFacts.protein && <span>💪 {recipe.nutritionFacts.protein}g protein</span>}
+                    </div>
+                  )}
+                </button>
+                <div className="recipe-actions">
+                  <button 
+                    className="delete-button"
+                    onClick={(e) => handleDelete(recipe.id, e)}
+                    title="Delete recipe"
+                    disabled={deletingId === recipe.id}
+                  >
+                    {deletingId === recipe.id ? '...' : '🗑️ Delete'}
+                  </button>
                 </div>
-                <div className="recipe-details">
-                  {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
-                </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>

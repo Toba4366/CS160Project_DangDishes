@@ -20,12 +20,24 @@ function SearchResults() {
         setLoading(true);
         setError(null);
 
-        const searchedIngredients = filters?.selectedIngredients || ['chicken'];
+        // Combine recipe name search and ingredients into a single search array
+        // This allows searching for recipe names and ingredients together
+        let searchTerms = filters?.selectedIngredients || [];
+        
+        // Add recipe name to search terms if provided
+        if (filters?.recipeNameSearch?.trim()) {
+          searchTerms = [...searchTerms, filters.recipeNameSearch.trim()];
+        }
+        
+        // Default to 'chicken' if no search terms
+        if (searchTerms.length === 0) {
+          searchTerms = ['chicken'];
+        }
 
         // Fetch both web results and history in parallel
         const [webData, historyData] = await Promise.all([
           recipeService.searchRecipes(
-            searchedIngredients,
+            searchTerms,
             { maxResults: 10 }
           ),
           recipeService.getHistory()
@@ -33,6 +45,12 @@ function SearchResults() {
 
         // Apply filters to web recipes
         const filteredWebRecipes = (webData.recipes || []).filter(recipe => {
+          // Filter by recipe name if searching by name
+          if (filters?.recipeNameSearch) {
+            const nameMatch = recipe.name?.toLowerCase().includes(filters.recipeNameSearch.toLowerCase());
+            if (!nameMatch) return false;
+          }
+
           // Filter by cooking time
           const recipeTime = recipe.time || 0;
           const timeMatch = recipeTime >= (filters?.minTime || 0) &&
@@ -43,17 +61,43 @@ function SearchResults() {
           const dishesMatch = recipeDishes >= (filters?.minDishes || 1) &&
             recipeDishes <= (filters?.maxDishes || 10);
 
-          return timeMatch && dishesMatch;
+          // Filter by servings
+          const recipeServings = recipe.servings || recipe.dishes || 4;
+          const servingsMatch = recipeServings >= (filters?.minServings || 1) &&
+            recipeServings <= (filters?.maxServings || 8);
+
+          // Filter by ingredient count
+          const ingredientCount = recipe.ingredients?.length || 0;
+          const ingredientsMatch = ingredientCount === 0 || 
+            (ingredientCount >= (filters?.minIngredients || 1) &&
+             ingredientCount <= (filters?.maxIngredients || 20));
+
+          // Filter by dietary tags (if any are selected)
+          const dietaryMatch = !filters?.dietaryTags?.length || 
+            filters.dietaryTags.some(tag => 
+              recipe.tags?.includes(tag.toLowerCase()) || 
+              recipe.dietary?.includes(tag.toLowerCase())
+            );
+
+          return timeMatch && dishesMatch && servingsMatch && ingredientsMatch && dietaryMatch;
         });
         setWebRecipes(filteredWebRecipes);
 
-        // Filter history to only show recipes with the searched ingredients and filters
+        // Filter history to only show recipes with the searched ingredients/name and filters
         const filteredHistory = (historyData.recipes || []).filter(recipe => {
-          // Filter by ingredients
           const recipeName = recipe.name?.toLowerCase() || '';
-          const ingredientMatch = searchedIngredients.some(ingredient =>
-            recipeName.includes(ingredient.toLowerCase())
-          );
+          
+          // If searching by recipe name, match that
+          if (filters?.recipeNameSearch) {
+            const nameMatch = recipeName.includes(filters.recipeNameSearch.toLowerCase());
+            if (!nameMatch) return false;
+          } else {
+            // Otherwise match by ingredients
+            const ingredientMatch = searchedIngredients.length === 0 || searchedIngredients.some(ingredient =>
+              recipeName.includes(ingredient.toLowerCase())
+            );
+            if (!ingredientMatch) return false;
+          }
 
           // Filter by cooking time
           const recipeTime = recipe.time || 0;
@@ -65,7 +109,25 @@ function SearchResults() {
           const dishesMatch = recipeDishes >= (filters?.minDishes || 1) &&
             recipeDishes <= (filters?.maxDishes || 10);
 
-          return ingredientMatch && timeMatch && dishesMatch;
+          // Filter by servings
+          const recipeServings = recipe.servings || recipe.dishes || 4;
+          const servingsMatch = recipeServings >= (filters?.minServings || 1) &&
+            recipeServings <= (filters?.maxServings || 8);
+
+          // Filter by ingredient count
+          const ingredientCount = recipe.ingredients?.length || 0;
+          const ingredientsMatch = ingredientCount === 0 || 
+            (ingredientCount >= (filters?.minIngredients || 1) &&
+             ingredientCount <= (filters?.maxIngredients || 20));
+
+          // Filter by dietary tags
+          const dietaryMatch = !filters?.dietaryTags?.length || 
+            filters.dietaryTags.some(tag => 
+              recipe.tags?.includes(tag.toLowerCase()) || 
+              recipe.dietary?.includes(tag.toLowerCase())
+            );
+
+          return timeMatch && dishesMatch && servingsMatch && ingredientsMatch && dietaryMatch;
         });
         setHistoryRecipes(filteredHistory);
       } catch (err) {
@@ -154,9 +216,13 @@ function SearchResults() {
 
       {showFilters && (
         <div className="filters-dropdown">
-          <p>Ingredients: {filters?.selectedIngredients?.join(', ') || 'None'}</p>
-          <p>Time: {filters?.minTime || 0} - {filters?.maxTime || 60} min</p>
-          <p>Dishes: {filters?.minDishes || 1} - {filters?.maxDishes || 10}</p>
+          {filters?.recipeNameSearch && <p><strong>Recipe Name:</strong> {filters.recipeNameSearch}</p>}
+          {filters?.selectedIngredients?.length > 0 && <p><strong>Ingredients:</strong> {filters.selectedIngredients.join(', ')}</p>}
+          <p><strong>Time:</strong> {filters?.minTime || 0} - {filters?.maxTime || 60} min</p>
+          <p><strong>Dishes:</strong> {filters?.minDishes || 1} - {filters?.maxDishes || 10}</p>
+          <p><strong>Servings:</strong> {filters?.minServings || 1} - {filters?.maxServings || 8}</p>
+          <p><strong>Ingredients Count:</strong> {filters?.minIngredients || 1} - {filters?.maxIngredients || 20}</p>
+          {filters?.dietaryTags?.length > 0 && <p><strong>Dietary:</strong> {filters.dietaryTags.join(', ')}</p>}
         </div>
       )}
 

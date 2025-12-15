@@ -79,23 +79,34 @@ async def health_check():
 @app.post("/api/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     """
-    Search for recipes based on ingredients
+    Search for recipes based on ingredients and recipe names
+    Combines multiple search terms together
     """
     try:
-        if not request.ingredients:
-            raise HTTPException(status_code=400, detail="No ingredients provided")
+        # Allow empty ingredients list - use default search term
+        ingredients = request.ingredients or ['chicken']
         
-        # Search using the first ingredient (can be enhanced to combine multiple)
-        primary_ingredient = request.ingredients[0]
-        recipes = search_recipes(primary_ingredient, request.maxResults)
+        if not ingredients or (len(ingredients) == 1 and not ingredients[0]):
+            ingredients = ['chicken']
+        
+        # Combine all search terms into a single search query
+        search_term = ' '.join(ingredients)
+        print(f"Backend search request for: {search_term}")
+        recipes = search_recipes(search_term, request.maxResults)
+        print(f"Backend search returned {len(recipes)} recipes")
         
         return {
             "recipes": recipes,
             "count": len(recipes),
-            "searchTerm": primary_ingredient
+            "searchTerm": search_term
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Backend search error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/history", response_model=HistoryResponse)
