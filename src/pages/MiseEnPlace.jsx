@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
+import { scaleIngredients, resetIngredients } from '../utils/ingredientScaler';
 import './MiseEnPlace.css';
 
 function MiseEnPlace() {
@@ -50,6 +51,8 @@ function MiseEnPlace() {
   const [hydrated, setHydrated] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [servingMultiplier, setServingMultiplier] = useState(1);
+  const originalServings = recipeData?.servings || recipeData?.dishes || 4;
 
   const mergeCheckedState = (baseList, savedList) => {
     if (!Array.isArray(savedList)) return baseList;
@@ -150,6 +153,21 @@ function MiseEnPlace() {
     });
   };
 
+  const handleServingChange = (change) => {
+    const newMultiplier = Math.max(0.25, servingMultiplier + change);
+    setServingMultiplier(newMultiplier);
+    
+    // Scale ingredients based on new multiplier
+    const scaledIngredients = scaleIngredients(recipeIngredients, newMultiplier);
+    setIngredients(mergeCheckedState(scaledIngredients, ingredients));
+  };
+
+  const handleResetServings = () => {
+    setServingMultiplier(1);
+    const resetIngreds = resetIngredients(ingredients);
+    setIngredients(mergeCheckedState(resetIngreds, ingredients));
+  };
+
   return (
     <div className="mise-en-place">
       <button className="back-button" onClick={handleBack}>
@@ -170,6 +188,34 @@ function MiseEnPlace() {
       <i className="description">Check off items as you gather them.</i>
 
       <div className="checklist-section">
+        <div className="section-header-with-controls">
+          <h3>Ingredients</h3>
+          <div className="serving-controls">
+            <span className="serving-label">Servings:</span>
+            <button className="serving-btn" onClick={() => handleServingChange(-0.25)} disabled={servingMultiplier <= 0.25}>−</button>
+            <span className="serving-display">{(originalServings * servingMultiplier).toFixed(1)}</span>
+            <button className="serving-btn" onClick={() => handleServingChange(0.25)}>+</button>
+            {servingMultiplier !== 1 && (
+              <button className="reset-btn" onClick={handleResetServings}>Reset</button>
+            )}
+          </div>
+        </div>
+        <div className="checklist">
+          {ingredients.map(ing => (
+            <label key={ing.id} className="checkbox-item" htmlFor={`ing-${ing.id}`}>
+              <input
+                id={`ing-${ing.id}`}
+                type="checkbox"
+                checked={ing.checked}
+                onChange={() => toggleIngredient(ing.id)}
+              />
+              <span className={ing.checked ? 'checked' : ''}>{ing.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="checklist-section">
         <h3>Tools</h3>
         <div className="checklist">
           {tools.map(tool => (
@@ -181,23 +227,6 @@ function MiseEnPlace() {
                 onChange={() => toggleTool(tool.id)}
               />
               <span className={tool.checked ? 'checked' : ''}>{tool.name}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="checklist-section">
-        <h3>Ingredients</h3>
-        <div className="checklist">
-          {ingredients.map(ingredient => (
-            <label key={ingredient.id} className="checkbox-item" htmlFor={`ingredient-${ingredient.id}`}>
-              <input
-                id={`ingredient-${ingredient.id}`}
-                type="checkbox"
-                checked={ingredient.checked}
-                onChange={() => toggleIngredient(ingredient.id)}
-              />
-              <span className={ingredient.checked ? 'checked' : ''}>{ingredient.name}</span>
             </label>
           ))}
         </div>

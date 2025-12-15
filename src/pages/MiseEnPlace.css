@@ -65,10 +65,89 @@
   margin-bottom: 30px;
 }
 
+.section-header-with-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .checklist-section h3 {
   font-size: 24px;
   color: black;
-  margin-bottom: 15px;
+  margin: 0;
+}
+
+.serving-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f5f5f5;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+}
+
+.serving-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.serving-display {
+  min-width: 40px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--primary-green);
+}
+
+.serving-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 2px solid var(--primary-green);
+  background: white;
+  color: var(--primary-green);
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.serving-btn:hover:not(:disabled) {
+  background: var(--primary-green);
+  color: white;
+  transform: scale(1.05);
+}
+
+.serving-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.reset-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 2px solid #999;
+  background: white;
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 6px;
+}
+
+.reset-btn:hover {
+  background: #f0f0f0;
+  border-color: #666;
+  color: #333;
 }
 
 .checklist {
