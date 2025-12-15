@@ -5,17 +5,129 @@ import { parseRecipeWithReagent, convertReagentToTimeline } from '../services/re
 import './Loading.css';
 
 const cookingTips = [
-  "Tip: Read the entire recipe before starting to cook!",
-  "Tip: Prep all ingredients before you start cooking (mise en place).",
-  "Tip: Keep your knives sharp for safer, easier cutting.",
-  "Tip: Let meat rest after cooking for juicier results.",
-  "Tip: Season your food at every step, not just at the end.",
-  "Tip: Save your pasta water - it's great for adjusting sauce consistency!",
-  "Tip: Room temperature ingredients mix better in baking.",
-  "App Tip: Use the ingredient history to quickly add common items.",
-  "App Tip: Check off items as you gather them on the mise en place page.",
-  "App Tip: View your cooking history to find your favorite recipes quickly!",
+  "💡 Read the entire recipe before starting to cook!",
+  "💡 Prep all ingredients before you start cooking (mise en place).",
+  "💡 Keep your knives sharp for safer, easier cutting.",
+  "💡 Let meat rest after cooking for juicier results.",
+  "💡 Season your food at every step, not just at the end.",
+  "💡 Save your pasta water - it's great for adjusting sauce consistency!",
+  "💡 Room temperature ingredients mix better in baking.",
+  "💡 Preheat your oven while prepping ingredients to save time.",
+  "💡 Make sure your pan is hot before adding ingredients for best searing.",
+  "💡 Use a timer for each step to stay on track with your timeline.",
+  "💡 Clean as you go to make post-cooking cleanup easier.",
+  "💡 Taste and adjust seasonings throughout the cooking process.",
+  "💡 Use fresh herbs at the end of cooking to preserve their flavor.",
+  "💡 Don't overcrowd your pan - cook in batches if needed.",
+  "💡 Let vegetables reach room temperature before roasting.",
+  "💡 Use a meat thermometer to ensure perfect doneness.",
+  "💡 Toast spices in a dry pan to enhance their aroma.",
+  "💡 Add acidic ingredients (lemon, vinegar) to brighten flavors.",
+  "💡 Deglaze your pan with wine or stock to make a quick sauce.",
+  "💡 Let baked goods cool completely before cutting for clean slices.",
+  "💡 Use the back of a spoon to taste hot dishes safely.",
+  "💡 Keep a clean, damp towel nearby for quick hand cleaning.",
+  "💡 Organize your workspace to move efficiently between tasks.",
+  "💡 Set out all tools before starting to avoid mid-recipe searches.",
+  "💡 Check expiration dates on spices - they lose potency over time.",
+  "💡 Use kitchen scissors to quickly chop herbs right into dishes.",
+  "💡 Keep your cutting board stable with a damp towel underneath.",
+  "💡 Practice your knife skills during prep to improve speed.",
+  "💡 Invest in quality cookware that heats evenly for consistent results.",
+  "💡 Learn the difference between simmering, boiling, and poaching.",
+  "📱 Use the ingredient history to quickly add common items.",
+  "📱 Check off items as you gather them on the mise en place page.",
+  "📱 View your cooking history to find your favorite recipes quickly!",
+  "📱 Use the search filters to find recipes matching your dietary needs.",
+  "📱 Save recipes to your history for easy access later.",
+  "📱 Toggle between horizontal and vertical timeline layouts.",
+  "📱 Mark completed steps on the timeline to track your progress.",
+  "📱 Edit saved recipes to add personal notes or adjustments.",
 ];
+
+// Generate context-aware tip based on recipe data
+const generateContextAwareTip = (recipeData) => {
+  if (!recipeData) return null;
+  
+  const tools = (recipeData.tools || []).map(t => typeof t === 'string' ? t.toLowerCase() : (t.name || '').toLowerCase());
+  const instructions = (recipeData.instructions || []).join(' ').toLowerCase();
+  const ingredients = (recipeData.ingredients || []).join(' ').toLowerCase();
+  
+  // Oven tips
+  if (tools.includes('oven') || instructions.includes('oven') || instructions.includes('bake') || instructions.includes('roast')) {
+    return "🔥 Preheat your oven during prep - it'll be ready when you are!";
+  }
+  
+  // Pan/skillet tips
+  if (tools.some(t => t.includes('pan') || t.includes('skillet')) || instructions.includes('sauté') || instructions.includes('fry')) {
+    return "🍳 Heat your pan before adding ingredients for better searing and browning.";
+  }
+  
+  // Knife work tips
+  if (instructions.includes('chop') || instructions.includes('dice') || instructions.includes('mince') || instructions.includes('slice')) {
+    return "🔪 Keep your knife sharp and fingers curled for safe, efficient cutting.";
+  }
+  
+  // Meat tips
+  if (ingredients.includes('chicken') || ingredients.includes('beef') || ingredients.includes('pork') || ingredients.includes('steak')) {
+    return "🥩 Let meat rest after cooking to lock in juices and improve tenderness.";
+  }
+  
+  // Pasta tips
+  if (ingredients.includes('pasta') || instructions.includes('pasta')) {
+    return "🍝 Save a cup of pasta water before draining - it's perfect for sauce consistency!";
+  }
+  
+  // Baking tips
+  if (tools.includes('mixing bowl') || instructions.includes('mix') || instructions.includes('whisk')) {
+    return "🥣 Room temperature ingredients blend more easily and create better texture.";
+  }
+  
+  // Multiple dishes tip
+  if ((recipeData.dishes || 0) > 4) {
+    return "🧼 With many dishes to wash, clean as you go to save time at the end!";
+  }
+  
+  // Long recipe tip
+  if ((recipeData.time || 0) > 45) {
+    return "⏱️ This recipe takes a while - use passive cooking time to prep other ingredients!";
+  }
+  
+  return null;
+};
+
+// Get a random tip that hasn't been shown recently
+const getRandomTip = (recipeData) => {
+  // Try context-aware tip first (70% chance)
+  if (recipeData && Math.random() < 0.7) {
+    const contextTip = generateContextAwareTip(recipeData);
+    if (contextTip) return contextTip;
+  }
+  
+  const SHOWN_TIPS_KEY = 'shown-tips';
+  const MAX_SHOWN_TIPS = 10;
+  
+  try {
+    const shownTipsStr = sessionStorage.getItem(SHOWN_TIPS_KEY);
+    const shownTips = shownTipsStr ? JSON.parse(shownTipsStr) : [];
+    
+    // Filter out recently shown tips
+    const availableTips = cookingTips.filter(tip => !shownTips.includes(tip));
+    
+    // If all tips have been shown, reset
+    const tipsToChooseFrom = availableTips.length > 0 ? availableTips : cookingTips;
+    const selectedTip = tipsToChooseFrom[Math.floor(Math.random() * tipsToChooseFrom.length)];
+    
+    // Track shown tip
+    const updatedShownTips = [...shownTips, selectedTip].slice(-MAX_SHOWN_TIPS);
+    sessionStorage.setItem(SHOWN_TIPS_KEY, JSON.stringify(updatedShownTips));
+    
+    return selectedTip;
+  } catch (err) {
+    // Fallback if sessionStorage fails
+    return cookingTips[Math.floor(Math.random() * cookingTips.length)];
+  }
+};
 
 function Loading() {
   const location = useLocation();
@@ -24,7 +136,7 @@ function Loading() {
   const [scrapingFailed, setScrapingFailed] = useState(false);
   const hasNavigated = useRef(false);
   
-  const randomTip = cookingTips[Math.floor(Math.random() * cookingTips.length)];
+  const randomTip = getRandomTip(recipeData);
 
   // Determine loading message based on next page
   const getLoadingMessage = () => {
