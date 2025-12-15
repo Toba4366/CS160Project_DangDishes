@@ -64,7 +64,7 @@ function MiseEnPlace() {
     setHydrated(false);
     setTools(recipeTools);
     setIngredients(recipeIngredients);
-  }, [recipeTools, recipeIngredients]);
+  }, [recipeData]);
 
   // Hydrate checkboxes from localStorage
   useEffect(() => {
