@@ -22,6 +22,12 @@
   gap: 10px;
 }
 
+.recipe-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .recipe-button {
   background: var(--primary-green);
   border: none;
@@ -30,57 +36,49 @@
   cursor: pointer;
   text-align: left;
   transition: transform 0.2s;
+  width: 100%;
 }
 
-.recipe-button:hover {
+.recipe-button:hover:not(:disabled) {
   transform: translateY(-2px);
   opacity: 0.9;
 }
 
-.recipe-header {
+.recipe-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.recipe-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 5px;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
-.recipe-name {
-  font-size: 20px;
-  font-weight: bold;
-  color: black;
-  flex: 1;
-}
-
-.last-cooked {
+.edit-button,
+.delete-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
   font-size: 14px;
-  color: #666;
-  font-style: italic;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
 }
 
-.recipe-details {
-  font-size: 14px;
-  color: #333;
+.edit-button {
+  background: #3498db;
+  color: white;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-  font-size: 16px;
+.edit-button:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-1px);
 }
 
-.description.error {
-  color: #ff6b6b;
+.delete-button {
+  background: #e74c3c;
+  color: white;
 }
 
-.history-section {
-  margin-bottom: 40px;
-}
-
-.history-section h2 {
-  font-size: 22px;
-  color: black;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 3px solid var(--primary-green);
-}
+.delete-button:hover:not(:disable

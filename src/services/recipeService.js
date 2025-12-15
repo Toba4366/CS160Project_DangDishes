@@ -252,6 +252,40 @@ export const recipeService = {
   },
 
   /**
+   * Delete a specific recipe from history
+   * @param {string} recipeId - The ID of the recipe to delete
+   * @returns {Promise<Object>} Success response
+   */
+  deleteFromHistory: async (recipeId) => {
+    const hasBackend = await checkBackendHealth();
+    
+    if (hasBackend) {
+      try {
+        return await api.delete(`/api/history/${recipeId}`);
+      } catch (error) {
+        console.log('Backend not available, deleting from localStorage');
+        // Fallback to localStorage
+        const historyData = localStorage.getItem('recipeHistory');
+        if (historyData) {
+          const history = JSON.parse(historyData);
+          history.recipes = history.recipes.filter(r => r.id !== recipeId);
+          localStorage.setItem('recipeHistory', JSON.stringify(history));
+        }
+        return { success: true };
+      }
+    } else {
+      // Delete from localStorage
+      const historyData = localStorage.getItem('recipeHistory');
+      if (historyData) {
+        const history = JSON.parse(historyData);
+        history.recipes = history.recipes.filter(r => r.id !== recipeId);
+        localStorage.setItem('recipeHistory', JSON.stringify(history));
+      }
+      return { success: true };
+    }
+  },
+
+  /**
    * Clear all cooking history
    * @returns {Promise<Object>} Success response
    */
@@ -260,43 +294,4 @@ export const recipeService = {
     
     if (hasBackend) {
       try {
-        return await api.delete('/api/history');
-      } catch (error) {
-        localStorage.removeItem('recipeHistory');
-        return { success: true };
-      }
-    } else {
-      localStorage.removeItem('recipeHistory');
-      return { success: true };
-    }
-  },
-
-  /**
-   * Get detailed information for a specific recipe
-   * @param {string} recipeUrl - The recipe URL to scrape
-   * @returns {Promise<Object>} Recipe details with ingredients and tools
-   */
-  getRecipeDetails: async (recipeUrl) => {
-    // Check if it's a TheMealDB URL
-    if (recipeUrl && recipeUrl.includes('themealdb.com/meal/')) {
-      const mealId = recipeUrl.split('/').pop();
-      return fetchTheMealDBDetails(mealId);
-    }
-    
-    // For other URLs, try backend scraper
-    const hasBackend = await checkBackendHealth();
-    
-    if (hasBackend) {
-      try {
-        return await api.post('/api/recipe/details', { url: recipeUrl });
-      } catch (error) {
-        console.log('Backend not available for recipe details');
-        // Return mock data structure if backend fails
-        return { ingredients: [], tools: [] };
-      }
-    } else {
-      // Return empty arrays if no backend
-      return { ingredients: [], tools: [] };
-    }
-  },
-};
+        ret

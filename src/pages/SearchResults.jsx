@@ -33,6 +33,12 @@ function SearchResults() {
 
         // Apply filters to web recipes
         const filteredWebRecipes = (webData.recipes || []).filter(recipe => {
+          // Filter by recipe name if searching by name
+          if (filters?.recipeNameSearch) {
+            const nameMatch = recipe.name?.toLowerCase().includes(filters.recipeNameSearch.toLowerCase());
+            if (!nameMatch) return false;
+          }
+
           // Filter by cooking time
           const recipeTime = recipe.time || 0;
           const timeMatch = recipeTime >= (filters?.minTime || 0) &&
@@ -43,17 +49,43 @@ function SearchResults() {
           const dishesMatch = recipeDishes >= (filters?.minDishes || 1) &&
             recipeDishes <= (filters?.maxDishes || 10);
 
-          return timeMatch && dishesMatch;
+          // Filter by servings
+          const recipeServings = recipe.servings || recipe.dishes || 4;
+          const servingsMatch = recipeServings >= (filters?.minServings || 1) &&
+            recipeServings <= (filters?.maxServings || 8);
+
+          // Filter by ingredient count
+          const ingredientCount = recipe.ingredients?.length || 0;
+          const ingredientsMatch = ingredientCount === 0 || 
+            (ingredientCount >= (filters?.minIngredients || 1) &&
+             ingredientCount <= (filters?.maxIngredients || 20));
+
+          // Filter by dietary tags (if any are selected)
+          const dietaryMatch = !filters?.dietaryTags?.length || 
+            filters.dietaryTags.some(tag => 
+              recipe.tags?.includes(tag.toLowerCase()) || 
+              recipe.dietary?.includes(tag.toLowerCase())
+            );
+
+          return timeMatch && dishesMatch && servingsMatch && ingredientsMatch && dietaryMatch;
         });
         setWebRecipes(filteredWebRecipes);
 
-        // Filter history to only show recipes with the searched ingredients and filters
+        // Filter history to only show recipes with the searched ingredients/name and filters
         const filteredHistory = (historyData.recipes || []).filter(recipe => {
-          // Filter by ingredients
           const recipeName = recipe.name?.toLowerCase() || '';
-          const ingredientMatch = searchedIngredients.some(ingredient =>
-            recipeName.includes(ingredient.toLowerCase())
-          );
+          
+          // If searching by recipe name, match that
+          if (filters?.recipeNameSearch) {
+            const nameMatch = recipeName.includes(filters.recipeNameSearch.toLowerCase());
+            if (!nameMatch) return false;
+          } else {
+            // Otherwise match by ingredients
+            const ingredientMatch = searchedIngredients.length === 0 || searchedIngredients.some(ingredient =>
+              recipeName.includes(ingredient.toLowerCase())
+            );
+            if (!ingredientMatch) return false;
+          }
 
           // Filter by cooking time
           const recipeTime = recipe.time || 0;
@@ -65,7 +97,25 @@ function SearchResults() {
           const dishesMatch = recipeDishes >= (filters?.minDishes || 1) &&
             recipeDishes <= (filters?.maxDishes || 10);
 
-          return ingredientMatch && timeMatch && dishesMatch;
+          // Filter by servings
+          const recipeServings = recipe.servings || recipe.dishes || 4;
+          const servingsMatch = recipeServings >= (filters?.minServings || 1) &&
+            recipeServings <= (filters?.maxServings || 8);
+
+          // Filter by ingredient count
+          const ingredientCount = recipe.ingredients?.length || 0;
+          const ingredientsMatch = ingredientCount === 0 || 
+            (ingredientCount >= (filters?.minIngredients || 1) &&
+             ingredientCount <= (filters?.maxIngredients || 20));
+
+          // Filter by dietary tags
+          const dietaryMatch = !filters?.dietaryTags?.length || 
+            filters.dietaryTags.some(tag => 
+              recipe.tags?.includes(tag.toLowerCase()) || 
+              recipe.dietary?.includes(tag.toLowerCase())
+            );
+
+          return timeMatch && dishesMatch && servingsMatch && ingredientsMatch && dietaryMatch;
         });
         setHistoryRecipes(filteredHistory);
       } catch (err) {
@@ -131,82 +181,4 @@ function SearchResults() {
           ← Back
         </button>
         <h1>Error</h1>
-        <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Try Again</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="search-results">
-      <button className="back-button" onClick={() => navigate('/recipe-search')}>
-        ← Back
-      </button>
-
-      <h1>Search Results</h1>
-
-      <button
-        className="filter-toggle"
-        onClick={() => setShowFilters(!showFilters)}
-      >
-        {showFilters ? '▲' : '▼'} Selected Filters
-      </button>
-
-      {showFilters && (
-        <div className="filters-dropdown">
-          <p>Ingredients: {filters?.selectedIngredients?.join(', ') || 'None'}</p>
-          <p>Time: {filters?.minTime || 0} - {filters?.maxTime || 60} min</p>
-          <p>Dishes: {filters?.minDishes || 1} - {filters?.maxDishes || 10}</p>
-        </div>
-      )}
-
-      {historyRecipes.length > 0 && (
-        <div className="recipe-section">
-          <h2>Your Previous Recipes</h2>
-          <div className="recipe-list">
-            {historyRecipes.map(recipe => (
-              <button
-                key={recipe.id}
-                className="recipe-button"
-                onClick={() => handleRecipeClick(recipe)}
-              >
-                <div className="recipe-name">{recipe.name}</div>
-                <div className="recipe-details">
-                  {recipe.time} min · {recipe.dishes} dishes
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {webRecipes.length > 0 && (
-        <div className="recipe-section">
-          <h2>Recipes from the Web</h2>
-          <div className="recipe-list">
-            {webRecipes.map(recipe => (
-              <button
-                key={recipe.id}
-                className="recipe-button"
-                onClick={() => handleRecipeClick(recipe)}
-              >
-                <div className="recipe-name">{recipe.name || 'Untitled Recipe'}</div>
-                <div className="recipe-details">
-                  {recipe.time} min · {recipe.dishes} dishes
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {webRecipes.length === 0 && historyRecipes.length === 0 && (
-        <div className="recipe-section">
-          <p>No recipes found. Try different ingredients!</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default SearchResults;
+ 

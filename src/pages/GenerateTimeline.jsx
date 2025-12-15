@@ -161,6 +161,8 @@ function GenerateTimeline() {
   const [textInput, setTextInput] = useState('');
   const [urlError, setUrlError] = useState('');
   const [textError, setTextError] = useState('');
+  const [recipeTitle, setRecipeTitle] = useState('');
+  const [titleError, setTitleError] = useState('');
 
   const validateUrl = (url) => {
     if (!url.trim()) {
@@ -556,6 +558,12 @@ function GenerateTimeline() {
     const error = validateText(textInput);
     setTextError(error);
     
+    // Validate title if provided manually
+    if (!recipeTitle.trim()) {
+      setTitleError('Please enter a recipe title');
+      return;
+    }
+    
     if (!error) {
       // Parse ingredients, tools, instructions, time, and servings from text
       const ingredients = parseIngredientsFromText(textInput);
@@ -564,10 +572,10 @@ function GenerateTimeline() {
       const time = extractTimeFromText(textInput);
       const dishes = extractServingsFromText(textInput);
       
-      // Create properly formatted recipe object
+      // Create properly formatted recipe object with user-provided title
       const recipeData = {
         id: `text-${Date.now()}`,
-        name: extractNameFromText(textInput) || 'Custom Recipe',
+        name: recipeTitle.trim() || extractNameFromText(textInput) || 'Custom Recipe',
         url: null,
         recipeText: textInput,
         ingredients: ingredients,
@@ -608,13 +616,18 @@ function GenerateTimeline() {
     if (textError) setTextError(''); // Clear error on change
   };
 
+  const handleTitleChange = (e) => {
+    setRecipeTitle(e.target.value);
+    if (titleError) setTitleError(''); // Clear error on change
+  };
+
   return (
     <div className="generate-timeline">
       <button className="back-button" onClick={() => navigate('/')}>
         ← Back
       </button>
       
-      <h1>Generate Timeline</h1>
+      <h1>Enter Recipe</h1>
       <p className="page-description">
         Enter a recipe URL or paste recipe text to generate a cooking timeline
       </p>
@@ -654,8 +667,28 @@ function GenerateTimeline() {
         </div>
 
         <div className="input-group">
-          <label htmlFor="text-input" className="input-label">
-            Recipe Text
+          <label htmlFor="recipe-title" className="input-label">
+            Recipe Title <span className="required">*</span>
+          </label>
+          <div className="input-wrapper">
+            <input
+              id="recipe-title"
+              type="text"
+              className={`recipe-input ${titleError ? 'error' : ''}`}
+              placeholder="Enter a title for your recipe (e.g., Grandma's Cookies)"
+              value={recipeTitle}
+              onChange={handleTitleChange}
+            />
+            {titleError && (
+              <div className="error-message">
+                <span className="error-icon">⚠️</span>
+                {titleError}
+              </div>
+            )}
+          </div>
+
+          <label htmlFor="text-input" className="input-label" style={{ marginTop: '20px' }}>
+            Recipe Text <span className="required">*</span>
           </label>
           <div className="input-wrapper">
             <textarea
@@ -684,7 +717,7 @@ Example Instructions:
           <button 
             className="submit-button" 
             onClick={handleTextSubmit}
-            disabled={!textInput.trim()}
+            disabled={!textInput.trim() || !recipeTitle.trim()}
           >
             Submit
           </button>
