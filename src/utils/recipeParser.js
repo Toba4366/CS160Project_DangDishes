@@ -93,10 +93,136 @@ export const detectToolsFromText = (instructions) => {
 };
 
 /**
- * FUTURE ENHANCEMENTS:
- * ====================
- * - Add detectIngredientsFromText() for consistent ingredient parsing
- * - Add extractRecipeMetadata() to parse time, servings, difficulty
- * - Add validateRecipeFormat() to check if text has required sections
- * - Add normalizeToolNames() to handle variations (e.g., "8-inch pan" → "Pan")
+ * Extract cooking time from recipe text
+ * @param {string} text - Recipe text (title, instructions, etc.)
+ * @returns {number} Estimated time in minutes, or null if not found
  */
+export const extractCookingTime = (text) => {
+  if (!text) return null;
+  
+  const lower = text.toLowerCase();
+  let totalMinutes = 0;
+  
+  // "X hours Y minutes" or "X hrs Y min"
+  const hourMinPattern = /(\d+)\s*(?:hours?|hrs?)\s*(?:and\s*)?(\d+)?\s*(?:minutes?|mins?)?/gi;
+  let match = hourMinPattern.exec(lower);
+  if (match) {
+    totalMinutes += parseInt(match[1]) * 60;
+    if (match[2]) totalMinutes += parseInt(match[2]);
+    return totalMinutes;
+  }
+  
+  // "X-Y hours" (take average)
+  const hourRangePattern = /(\d+)\s*-\s*(\d+)\s*(?:hours?|hrs?)/i;
+  match = hourRangePattern.exec(lower);
+  if (match) {
+    const avg = (parseInt(match[1]) + parseInt(match[2])) / 2;
+    return Math.round(avg * 60);
+  }
+  
+  // "X hours"
+  const hourPattern = /(\d+)\s*(?:hours?|hrs?)/i;
+  match = hourPattern.exec(lower);
+  if (match) {
+    return parseInt(match[1]) * 60;
+  }
+  
+  // "X-Y minutes" (take average)
+  const minRangePattern = /(\d+)\s*-\s*(\d+)\s*(?:minutes?|mins?)/i;
+  match = minRangePattern.exec(lower);
+  if (match) {
+    return Math.round((parseInt(match[1]) + parseInt(match[2])) / 2);
+  }
+  
+  // "X minutes"
+  const minPattern = /(\d+)\s*(?:minutes?|mins?)/i;
+  match = minPattern.exec(lower);
+  if (match) {
+    return parseInt(match[1]);
+  }
+  
+  // Prep + cook time
+  const prepMatch = /prep(?:aration)?:\s*(\d+)\s*(?:min|minutes?)/i.exec(lower);
+  const cookMatch = /cook(?:ing)?:\s*(\d+)\s*(?:min|minutes?)/i.exec(lower);
+  if (prepMatch || cookMatch) {
+    if (prepMatch) totalMinutes += parseInt(prepMatch[1]);
+    if (cookMatch) totalMinutes += parseInt(cookMatch[1]);
+    return totalMinutes;
+  }
+  
+  return null;
+};
+
+/**
+ * Calculate dish count from tools and context
+ * @param {Array} tools - List of tools used in recipe
+ * @param {Array|string} instructions - Recipe instructions
+ * @returns {number} Estimated number of dishes to wash
+ */
+export const calculateDishCount = (tools = [], instructions = []) => {
+  const toolsArray = Array.isArray(tools) ? tools : [];
+  const instructionsText = Array.isArray(instructions) 
+    ? instructions.join(' ').toLowerCase() 
+    : (instructions || '').toLowerCase();
+  
+  // Exclude appliances that don't get washed
+  const nonDishAppliances = ['oven', 'stove', 'stovetop', 'microwave', 'toaster', 'grill'];
+  const washableTools = toolsArray.filter(tool => {
+    const lower = tool.toLowerCase();
+    return !nonDishAppliances.some(app => lower.includes(app));
+  });
+  
+  let dishCount = washableTools.length;
+  
+  // Add utensils mentioned in instructions
+  const utensilKeywords = ['spoon', 'fork', 'knife', 'spatula', 'whisk', 'tongs', 'ladle'];
+  utensilKeywords.forEach(utensil => {
+    if (instructionsText.includes(utensil) && !washableTools.some(t => t.toLowerCase().includes(utensil))) {
+      dishCount++;
+    }
+  });
+  
+  // Add serving dishes if plating is mentioned
+  if (instructionsText.includes('serve') || instructionsText.includes('plate')) {
+    dishCount += 2;
+  }
+  
+  return Math.max(3, Math.min(dishCount, 15)); // Min 3, max 15
+};
+
+/**
+ * Improve recipe metadata accuracy
+ * @param {Object} recipeData - Recipe data object
+ * @returns {Object} Recipe data with improved calculations
+ */
+export const improveRecipeMetadata = (recipeData) => {
+  if (!recipeData) return recipeData;
+  
+  const improved = { ...recipeData };
+  
+  // Improve time calculation
+  if (!improved.time || improved.time === 0) {
+    const titleTime = extractCookingTime(improved.name || '');
+    const instructionTime = extractCookingTime(
+      Array.isArray(improved.instructions) 
+        ? improved.instructions.join(' ') 
+        : improved.instructions || ''
+    );
+    improved.time = titleTime || instructionTime || 30;
+  }
+  
+  // Improve dish count
+  if (!improved.dishes || improved.dishes === 0) {
+    improved.dishes = calculateDishCount(improved.tools, improved.instructions);
+  }
+  
+  // Ensure tools list
+  if (!improved.tools || improved.tools.length === 0) {
+    const instructionsText = Array.isArray(improved.instructions)
+      ? improved.instructions.join(' ')
+      : improved.instructions || '';
+    improved.tools = detectToolsFromText(instructionsText);
+  }
+  
+  return improved;
+};

@@ -235,6 +235,12 @@ function History() {
                   <div className="recipe-details">
                     {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
                   </div>
+                  {recipe.nutritionFacts && Object.keys(recipe.nutritionFacts).some(key => recipe.nutritionFacts[key]) && (
+                    <div className="nutrition-preview">
+                      {recipe.nutritionFacts.calories && <span>🔥 {recipe.nutritionFacts.calories} cal</span>}
+                      {recipe.nutritionFacts.protein && <span>💪 {recipe.nutritionFacts.protein}g protein</span>}
+                    </div>
+                  )}
                 </button>
                 <div className="recipe-actions">
                   <button 
@@ -278,6 +284,12 @@ function History() {
                   <div className="recipe-details">
                     {recipe.time ? `${recipe.time} min` : 'Time not set'} · {recipe.dishes ? `${recipe.dishes} dishes` : 'Dishes not set'}
                   </div>
+                  {recipe.nutritionFacts && Object.keys(recipe.nutritionFacts).some(key => recipe.nutritionFacts[key]) && (
+                    <div className="nutrition-preview">
+                      {recipe.nutritionFacts.calories && <span>🔥 {recipe.nutritionFacts.calories} cal</span>}
+                      {recipe.nutritionFacts.protein && <span>💪 {recipe.nutritionFacts.protein}g protein</span>}
+                    </div>
+                  )}
                 </button>
                 <div className="recipe-actions">
                   <button 

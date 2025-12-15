@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { recipeService } from '../services/recipeService';
 import { instructionStarters } from '../constants/recipeVerbs';
-import { detectToolsFromText } from '../utils/recipeParser';
+import { detectToolsFromText, improveRecipeMetadata } from '../utils/recipeParser';
 import './GenerateTimeline.css';
 
 /**
@@ -573,7 +573,7 @@ function GenerateTimeline() {
       const dishes = extractServingsFromText(textInput);
       
       // Create properly formatted recipe object with user-provided title
-      const recipeData = {
+      let recipeData = {
         id: `text-${Date.now()}`,
         name: recipeTitle.trim() || extractNameFromText(textInput) || 'Custom Recipe',
         url: null,
@@ -585,6 +585,9 @@ function GenerateTimeline() {
         dishes: dishes,
         source: 'manual'
       };
+      
+      // Improve metadata with better calculations
+      recipeData = improveRecipeMetadata(recipeData);
       
       // Save to history
       try {

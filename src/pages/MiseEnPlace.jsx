@@ -112,6 +112,41 @@ function MiseEnPlace() {
     ));
   };
 
+  const handleServingChange = (delta) => {
+    const newMultiplier = Math.max(0.25, servingMultiplier + delta);
+    setServingMultiplier(newMultiplier);
+    
+    // Scale ingredients with new multiplier
+    const scaledIngredients = scaleIngredients(
+      recipeIngredients.map(ing => ({
+        ...ing,
+        originalName: ing.originalName || ing.name
+      })),
+      newMultiplier
+    );
+    
+    // Preserve checked state
+    setIngredients(prevIngredients => 
+      scaledIngredients.map(scaled => {
+        const prev = prevIngredients.find(p => p.id === scaled.id);
+        return { ...scaled, checked: prev?.checked || false };
+      })
+    );
+  };
+
+  const handleResetServings = () => {
+    setServingMultiplier(1);
+    
+    // Reset to original ingredient names
+    const resetIngs = resetIngredients(ingredients);
+    setIngredients(prevIngredients =>
+      resetIngs.map(reset => {
+        const prev = prevIngredients.find(p => p.id === reset.id);
+        return { ...reset, checked: prev?.checked || false };
+      })
+    );
+  };
+
   const handleSaveRecipe = async () => {
     if (saved || !recipeData?.needsSaving) return;
 
@@ -151,21 +186,6 @@ function MiseEnPlace() {
         fromPage
       } 
     });
-  };
-
-  const handleServingChange = (change) => {
-    const newMultiplier = Math.max(0.25, servingMultiplier + change);
-    setServingMultiplier(newMultiplier);
-    
-    // Scale ingredients based on new multiplier
-    const scaledIngredients = scaleIngredients(recipeIngredients, newMultiplier);
-    setIngredients(mergeCheckedState(scaledIngredients, ingredients));
-  };
-
-  const handleResetServings = () => {
-    setServingMultiplier(1);
-    const resetIngreds = resetIngredients(ingredients);
-    setIngredients(mergeCheckedState(resetIngreds, ingredients));
   };
 
   return (
