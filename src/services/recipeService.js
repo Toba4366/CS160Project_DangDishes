@@ -99,6 +99,20 @@ const fetchTheMealDBDetails = async (mealId) => {
 };
 
 /**
+ * Generate a unique cache key for a recipe
+ * Combines name and URL to avoid collisions
+ * @param {Object} recipe - Recipe object with name and/or url
+ * @returns {string} Unique cache key
+ */
+const generateCacheKey = (recipe) => {
+  const name = (recipe.name || recipe.recipeName || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const url = (recipe.url || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+  // Use both name and URL to avoid collisions, or recipe ID if available
+  const uniqueId = recipe.id || `${name}__${url}` || name || url || 'unknown';
+  return `timeline_${uniqueId}`;
+};
+
+/**
  * Recipe service for managing recipe search and history
  */
 export const recipeService = {
@@ -207,15 +221,9 @@ export const recipeService = {
    * @returns {Promise<Object>} Success response with recipe
    */
   addToHistory: async (recipe, llmParsedData = null) => {
-    // Cache LLM data if provided (saves API tokens on subsequent loads)
+    // Cache LLM data if provided using consolidated caching logic
     if (llmParsedData) {
-      const cacheKey = `timeline_${recipe.name || recipe.url}`;
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify(llmParsedData));
-        console.log('💾 Cached LLM timeline data for', recipe.name);
-      } catch (error) {
-        console.warn('Failed to cache timeline data:', error);
-      }
+      recipeService.cacheTimeline(recipe, llmParsedData);
     }
     
     const hasBackend = await checkBackendHealth();
@@ -233,12 +241,61 @@ export const recipeService = {
   },
 
   /**
+   * Cache LLM timeline data for a recipe (consolidated caching logic)
+   * @param {Object} recipe - Recipe object
+   * @param {Object} llmParsedData - LLM-parsed timeline data
+   */
+  cacheTimeline: (recipe, llmParsedData) => {
+    if (!llmParsedData || !recipe) return;
+    
+    const cacheKey = generateCacheKey(recipe);
+    try {
+      // Implement LRU eviction
+      const TIMELINE_CACHE_LIMIT = 20;
+      const timelineKeys = [];
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('timeline_')) {
+          let lastUpdated = 0;
+          try {
+            const data = JSON.parse(localStorage.getItem(key));
+            lastUpdated = data && data._cachedAt ? data._cachedAt : 0;
+          } catch (e) {
+            lastUpdated = 0;
+          }
+          timelineKeys.push({ key, lastUpdated });
+        }
+      }
+      
+      // If over limit, evict oldest
+      if (timelineKeys.length >= TIMELINE_CACHE_LIMIT) {
+        timelineKeys.sort((a, b) => a.lastUpdated - b.lastUpdated);
+        const toRemove = timelineKeys[0].key;
+        localStorage.removeItem(toRemove);
+        console.log('🗑️  Evicted old cache entry:', toRemove);
+      }
+      
+      // Add timestamp for LRU tracking
+      const cacheData = { ...llmParsedData, _cachedAt: Date.now() };
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      console.log('💾 Cached LLM timeline data for', recipe.name);
+    } catch (error) {
+      console.warn('Failed to cache timeline data:', error);
+    }
+  },
+
+  /**
    * Get cached LLM timeline data for a recipe
-   * @param {string} recipeNameOrUrl - Recipe name or URL
+   * @param {Object|string} recipeOrKey - Recipe object or legacy string key
    * @returns {Object|null} Cached timeline data or null
    */
-  getCachedTimeline: (recipeNameOrUrl) => {
-    const cacheKey = `timeline_${recipeNameOrUrl}`;
+  getCachedTimeline: (recipeOrKey) => {
+    // Support both new (object) and legacy (string) API
+    const cacheKey = typeof recipeOrKey === 'string' 
+      ? `timeline_${recipeOrKey}` 
+      : generateCacheKey(recipeOrKey);
+      
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -294,4 +351,43 @@ export const recipeService = {
     
     if (hasBackend) {
       try {
-        ret
+        return await api.delete('/api/history');
+      } catch (error) {
+        localStorage.removeItem('recipeHistory');
+        return { success: true };
+      }
+    } else {
+      localStorage.removeItem('recipeHistory');
+      return { success: true };
+    }
+  },
+
+  /**
+   * Get detailed information for a specific recipe
+   * @param {string} recipeUrl - The recipe URL to scrape
+   * @returns {Promise<Object>} Recipe details with ingredients and tools
+   */
+  getRecipeDetails: async (recipeUrl) => {
+    // Check if it's a TheMealDB URL
+    if (recipeUrl && recipeUrl.includes('themealdb.com/meal/')) {
+      const mealId = recipeUrl.split('/').pop();
+      return fetchTheMealDBDetails(mealId);
+    }
+    
+    // For other URLs, try backend scraper
+    const hasBackend = await checkBackendHealth();
+    
+    if (hasBackend) {
+      try {
+        return await api.post('/api/recipe/details', { url: recipeUrl });
+      } catch (error) {
+        console.log('Backend not available for recipe details');
+        // Return mock data structure if backend fails
+        return { ingredients: [], tools: [] };
+      }
+    } else {
+      // Return empty arrays if no backend
+      return { ingredients: [], tools: [] };
+    }
+  },
+};

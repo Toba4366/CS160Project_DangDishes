@@ -24,4 +24,11 @@ function App() {
           <Route path="edit-recipe" element={<EditRecipe />} />
           <Route path="mise-en-place" element={<MiseEnPlace />} />
           <Route path="timeline" element={<Timeline />} />
-          <Route path="loading
+          <Route path="loading" element={<Loading />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;

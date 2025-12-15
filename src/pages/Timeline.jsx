@@ -98,8 +98,8 @@ function Timeline() {
         let rowIdx = rows.findIndex(r => r.length === 0 || r[r.length - 1].end <= s.start);
         if (rowIdx === -1) { rows.push([]); rowIdx = rows.length - 1; }
         
-        // Recalculate end if not already set
-        if (s.end === undefined || !parsedByLLM) {
+        // Recalculate end if not already set (preserve pre-calculated values from LLM)
+        if (s.end === undefined) {
           s.end = s.start + s.duration;
         }
         s.row = rowIdx;

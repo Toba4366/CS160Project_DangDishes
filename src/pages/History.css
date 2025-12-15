@@ -81,4 +81,61 @@
   color: white;
 }
 
-.delete-button:hover:not(:disable
+.delete-button:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.edit-button:disabled,
+.delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.recipe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+
+.recipe-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: black;
+  flex: 1;
+}
+
+.last-cooked {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+.recipe-details {
+  font-size: 14px;
+  color: #333;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+}
+
+.description.error {
+  color: #ff6b6b;
+}
+
+.history-section {
+  margin-bottom: 40px;
+}
+
+.history-section h2 {
+  font-size: 22px;
+  color: black;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--primary-green);
+}

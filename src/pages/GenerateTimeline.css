@@ -48,11 +48,6 @@
   font-size: 18px;
   font-weight: bold;
   color: black;
-}
-
-.input-label .required {
-  color: #e74c3c;
-  margin-left: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -264,4 +259,10 @@
 
   .recipe-textarea {
     min-height: 150px;
-  
+  }
+
+  .submit-button {
+    width: 100%;
+    font-size: 16px;
+  }
+}

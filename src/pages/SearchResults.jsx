@@ -181,4 +181,86 @@ function SearchResults() {
           ← Back
         </button>
         <h1>Error</h1>
- 
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="search-results">
+      <button className="back-button" onClick={() => navigate('/recipe-search')}>
+        ← Back
+      </button>
+
+      <h1>Search Results</h1>
+
+      <button
+        className="filter-toggle"
+        onClick={() => setShowFilters(!showFilters)}
+      >
+        {showFilters ? '▲' : '▼'} Selected Filters
+      </button>
+
+      {showFilters && (
+        <div className="filters-dropdown">
+          {filters?.recipeNameSearch && <p><strong>Recipe Name:</strong> {filters.recipeNameSearch}</p>}
+          {filters?.selectedIngredients?.length > 0 && <p><strong>Ingredients:</strong> {filters.selectedIngredients.join(', ')}</p>}
+          <p><strong>Time:</strong> {filters?.minTime || 0} - {filters?.maxTime || 60} min</p>
+          <p><strong>Dishes:</strong> {filters?.minDishes || 1} - {filters?.maxDishes || 10}</p>
+          <p><strong>Servings:</strong> {filters?.minServings || 1} - {filters?.maxServings || 8}</p>
+          <p><strong>Ingredients Count:</strong> {filters?.minIngredients || 1} - {filters?.maxIngredients || 20}</p>
+          {filters?.dietaryTags?.length > 0 && <p><strong>Dietary:</strong> {filters.dietaryTags.join(', ')}</p>}
+        </div>
+      )}
+
+      {historyRecipes.length > 0 && (
+        <div className="recipe-section">
+          <h2>Your Previous Recipes</h2>
+          <div className="recipe-list">
+            {historyRecipes.map(recipe => (
+              <button
+                key={recipe.id}
+                className="recipe-button"
+                onClick={() => handleRecipeClick(recipe)}
+              >
+                <div className="recipe-name">{recipe.name}</div>
+                <div className="recipe-details">
+                  {recipe.time} min · {recipe.dishes} dishes
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {webRecipes.length > 0 && (
+        <div className="recipe-section">
+          <h2>Recipes from the Web</h2>
+          <div className="recipe-list">
+            {webRecipes.map(recipe => (
+              <button
+                key={recipe.id}
+                className="recipe-button"
+                onClick={() => handleRecipeClick(recipe)}
+              >
+                <div className="recipe-name">{recipe.name || 'Untitled Recipe'}</div>
+                <div className="recipe-details">
+                  {recipe.time} min · {recipe.dishes} dishes
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {webRecipes.length === 0 && historyRecipes.length === 0 && (
+        <div className="recipe-section">
+          <p>No recipes found. Try different ingredients!</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default SearchResults;

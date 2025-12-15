@@ -64,14 +64,22 @@ ${instructionsText}`;
     // Try to extract JSON from response (in case it's wrapped in markdown)
     let jsonText = responseText.trim();
     
-    // Remove markdown code blocks if present
+    // Remove markdown code blocks if present (handle any amount of whitespace)
     if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
+      jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
     } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/```\n?/g, '');
+      jsonText = jsonText.replace(/```\s*/g, '');
     }
-    
-    const data = JSON.parse(jsonText);
+
+    // Parse JSON with better error handling
+    let data;
+    try {
+      data = JSON.parse(jsonText);
+    } catch (jsonError) {
+      console.error('❌ Failed to parse JSON from Reagent response:', jsonError);
+      console.error('❌ Response text that failed to parse:', jsonText.substring(0, 500));
+      return null;
+    }
     console.log('✅ Parsed Reagent data:', data);
     
     return data;
@@ -151,9 +159,10 @@ export function convertReagentToTimeline(reagentData) {
   reagentData.steps.forEach((step, idx) => {
     const stepData = stepMap.get(step.id);
     
-    // Skip non-actionable steps (enjoy, serve, etc.)
-    if (NON_ACTIONABLE_STEPS.some(label => step.text.toLowerCase().includes(label))) {
-      console.log(`⏭️ Skipping non-actionable step: ${step.text}`);
+    // Skip non-actionable steps (enjoy, serve, etc.) - use exact match to avoid false positives
+    const stepTextTrimmed = step.text.trim().toLowerCase();
+    if (NON_ACTIONABLE_STEPS.some(label => stepTextTrimmed === label || stepTextTrimmed.startsWith(label + ' ') || stepTextTrimmed.startsWith(label + '.'))) {
+      console.log(`⏭️  Skipping non-actionable step: "${step.text}"`);
       return;
     }
     
@@ -192,12 +201,24 @@ export function convertReagentToTimeline(reagentData) {
   const existingCleanSteps = tracks.clean.map(s => s.label.toLowerCase());
   reagentData.tools?.forEach((tool, idx) => {
     const cleanLabel = `Wash ${tool}`;
-    if (!existingCleanSteps.some(label => label.includes(tool.toLowerCase()))) {
+    // Use exact match to avoid false positives (e.g., "pot" vs "pot holder")
+    if (!existingCleanSteps.some(label => label === cleanLabel.toLowerCase())) {
+      // Determine a sensible default start time: after the last cook or prep step
+      const lastCookOrPrepStep = [...tracks.cook, ...tracks.prep].reduce(
+        (latest, step) => (step.end && step.end > (latest?.end ?? 0)) ? step : latest,
+        null
+      );
+      const cleanStart = lastCookOrPrepStep ? lastCookOrPrepStep.end : 0;
+      const cleanDuration = 2;
+      
       tracks.clean.push({
         id: `clean-${idx + 1}`,
         label: cleanLabel,
-        duration: 2,
-        passive: false
+        duration: cleanDuration,
+        start: cleanStart,
+        end: cleanStart + cleanDuration,
+        passive: false,
+        dependencies: []
       });
     }
   });

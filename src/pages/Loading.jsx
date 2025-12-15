@@ -90,16 +90,8 @@ function Loading() {
               llmParsedData = convertReagentToTimeline(result);
               console.log('✅ Reagent parsing complete during loading!');
               
-              // Cache for future use (saves API tokens)
-              const cacheKey = recipeName || finalRecipeData.url;
-              if (cacheKey) {
-                try {
-                  localStorage.setItem(`timeline_${cacheKey}`, JSON.stringify(llmParsedData));
-                  console.log('💾 Cached LLM timeline data');
-                } catch (e) {
-                  console.warn('Failed to cache:', e);
-                }
-              }
+              // Cache for future use using consolidated caching logic (DRY)
+              recipeService.cacheTimeline(finalRecipeData, llmParsedData);
             }
           }
         } catch (error) {

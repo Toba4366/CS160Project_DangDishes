@@ -272,4 +272,179 @@ function RecipeSearch() {
                 min="1"
                 aria-label="Minimum number of dishes"
               />
-      
+              <button
+                onClick={() => setMinDishes(Math.min(maxDishes, minDishes + 1))}
+                aria-label="Increase minimum dishes"
+              >
+                +
+              </button>
+            </div>
+            <span className="range-separator">to</span>
+            <div className="input-with-buttons">
+              <button
+                onClick={() => setMaxDishes(Math.max(minDishes, maxDishes - 1))}
+                aria-label="Decrease maximum dishes"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={maxDishes}
+                onChange={(e) => setMaxDishes(Math.max(minDishes, Number(e.target.value)))}
+                min={minDishes}
+                aria-label="Maximum number of dishes"
+              />
+              <button
+                onClick={() => setMaxDishes(maxDishes + 1)}
+                aria-label="Increase maximum dishes"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="filter-group">
+          <label>
+            Number of Servings
+            <span className="filter-hint">How many people you're cooking for</span>
+          </label>
+          <div className="range-inputs">
+            <div className="input-with-buttons">
+              <button
+                onClick={() => setMinServings(Math.max(1, minServings - 1))}
+                aria-label="Decrease minimum servings"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={minServings}
+                onChange={(e) => setMinServings(Math.max(1, Number(e.target.value)))}
+                min="1"
+                aria-label="Minimum servings"
+              />
+              <button
+                onClick={() => setMinServings(Math.min(maxServings, minServings + 1))}
+                aria-label="Increase minimum servings"
+              >
+                +
+              </button>
+            </div>
+            <span className="range-separator">to</span>
+            <div className="input-with-buttons">
+              <button
+                onClick={() => setMaxServings(Math.max(minServings, maxServings - 1))}
+                aria-label="Decrease maximum servings"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={maxServings}
+                onChange={(e) => setMaxServings(Math.max(minServings, Number(e.target.value)))}
+                min={minServings}
+                aria-label="Maximum servings"
+              />
+              <button
+                onClick={() => setMaxServings(maxServings + 1)}
+                aria-label="Increase maximum servings"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="filter-group">
+          <label>
+            Number of Ingredients
+            <span className="filter-hint">Simpler recipes use fewer ingredients</span>
+          </label>
+          <div className="range-inputs">
+            <div className="input-with-buttons">
+              <button
+                onClick={() => setMinIngredients(Math.max(1, minIngredients - 1))}
+                aria-label="Decrease minimum ingredients"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={minIngredients}
+                onChange={(e) => setMinIngredients(Math.max(1, Number(e.target.value)))}
+                min="1"
+                aria-label="Minimum ingredients"
+              />
+              <button
+                onClick={() => setMinIngredients(Math.min(maxIngredients, minIngredients + 1))}
+                aria-label="Increase minimum ingredients"
+              >
+                +
+              </button>
+            </div>
+            <span className="range-separator">to</span>
+            <div className="input-with-buttons">
+              <button
+                onClick={() => setMaxIngredients(Math.max(minIngredients, maxIngredients - 1))}
+                aria-label="Decrease maximum ingredients"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                value={maxIngredients}
+                onChange={(e) => setMaxIngredients(Math.max(minIngredients, Number(e.target.value)))}
+                min={minIngredients}
+                aria-label="Maximum ingredients"
+              />
+              <button
+                onClick={() => setMaxIngredients(maxIngredients + 1)}
+                aria-label="Increase maximum ingredients"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="filter-group">
+          <label>
+            Dietary Preferences
+            <span className="filter-hint">Select any dietary restrictions or preferences</span>
+          </label>
+          <div className="dietary-tags">
+            {['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Keto', 'Low-Carb', 'Paleo', 'Halal', 'Kosher'].map(tag => (
+              <button
+                key={tag}
+                className={`dietary-tag ${dietaryTags.includes(tag) ? 'selected' : ''}`}
+                onClick={() => toggleDietaryTag(tag)}
+                aria-pressed={dietaryTags.includes(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <button
+        className="search-button"
+        onClick={handleSearch}
+        disabled={selectedIngredients.length === 0 && !recipeNameSearch.trim()}
+      >
+        Search Recipes
+        {recipeNameSearch.trim() 
+          ? ' by Name' 
+          : selectedIngredients.length > 0 
+            ? ` (${selectedIngredients.length} ingredient${selectedIngredients.length !== 1 ? 's' : ''})` 
+            : ''}
+      </button>
+      {selectedIngredients.length === 0 && !recipeNameSearch.trim() && (
+        <p className="search-hint">Please enter a recipe name or select at least one ingredient to search</p>
+      )}
+    </div>
+  );
+}
+
+export default RecipeSearch;
