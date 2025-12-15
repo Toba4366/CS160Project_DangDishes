@@ -170,8 +170,9 @@ function MiseEnPlace() {
         <h3>Tools</h3>
         <div className="checklist">
           {tools.map(tool => (
-            <label key={tool.id} className="checkbox-item">
+            <label key={tool.id} className="checkbox-item" htmlFor={`tool-${tool.id}`}>
               <input
+                id={`tool-${tool.id}`}
                 type="checkbox"
                 checked={tool.checked}
                 onChange={() => toggleTool(tool.id)}
@@ -186,8 +187,9 @@ function MiseEnPlace() {
         <h3>Ingredients</h3>
         <div className="checklist">
           {ingredients.map(ingredient => (
-            <label key={ingredient.id} className="checkbox-item">
+            <label key={ingredient.id} className="checkbox-item" htmlFor={`ingredient-${ingredient.id}`}>
               <input
+                id={`ingredient-${ingredient.id}`}
                 type="checkbox"
                 checked={ingredient.checked}
                 onChange={() => toggleIngredient(ingredient.id)}
