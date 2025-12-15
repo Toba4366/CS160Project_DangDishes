@@ -21,10 +21,38 @@
   margin-bottom: 30px;
 }
 
+.title-with-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
 .mise-en-place h2 {
   font-size: 32px;
   color: black;
-  margin-bottom: 10px;
+  margin: 0;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  font-size: 16px;
+  color: #555;
+  cursor: help;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.info-icon:hover {
+  background: var(--primary-green);
+  color: white;
+  transform: scale(1.1);
 }
 
 .description {

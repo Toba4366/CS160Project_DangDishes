@@ -14,8 +14,9 @@
 }
 
 .header-info h1 {
-  font-size: 24px;
+  font-size: 32px;
   margin: 0 0 4px;
+  color: #000;
 }
 
 .meta-tags {
@@ -25,14 +26,40 @@
 
 .meta-tags span {
   background: #f0f0f0;
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 15px;
   color: #555;
+  font-weight: 500;
+}
+
+.timeline-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.layout-toggle-button {
+  background: #f0f0f0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.layout-toggle-button:hover {
+  background: #e0e0e0;
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+  transform: translateY(-1px);
 }
 
 .save-button {
-  margin-left: auto;
   background: var(--primary-green);
   padding: 10px 20px;
   border-radius: 8px;
@@ -77,18 +104,20 @@
 
 /* Timeline Instructions */
 .timeline-instructions {
-  font-size: 16px;
-  color: #666;
+  font-size: 18px;
+  color: #555;
   margin-bottom: 30px;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 /* Timeline Container */
 .timeline-container {
-  background: var(--primary-green);
+  background: #e8f5e9;
   border-radius: 12px;
   padding: 25px 20px;
   overflow-x: auto;
+  border: 2px solid var(--primary-green);
 }
 
 .timeline-scroll {
@@ -110,9 +139,9 @@
 }
 
 .time-mark span {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
-  color: #000;
+  color: #1a1a1a;
 }
 
 /* Tracks */
@@ -128,16 +157,17 @@
 }
 
 .track-label {
-  width: 60px;
+  width: 70px;
   flex-shrink: 0;
   font-weight: bold;
-  font-size: 13px;
-  padding: 10px 8px;
+  font-size: 15px;
+  padding: 12px 10px;
   border-left: 4px solid;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 6px;
   display: flex;
   align-items: flex-start;
+  color: #1a1a1a;
 }
 
 .track-lane {
@@ -186,10 +216,9 @@
 }
 
 .step-marker {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  color: #1a1a1a;
 }
 
 .step-marker.checked {
@@ -197,20 +226,21 @@
 }
 
 .step-duration {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(0, 0, 0, 0.15);
-  padding: 2px 6px;
+  color: #1a1a1a;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 3px 8px;
   border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Step Text - full content, height auto-expands */
 .step-text {
-  font-size: 13px;
-  color: white;
-  line-height: 1.45;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  font-size: 15px;
+  color: #1a1a1a;
+  line-height: 1.5;
+  font-weight: 500;
 }
 
 /* Responsive */
@@ -225,21 +255,95 @@
   }
 
   .track-label {
-    width: 50px;
-    font-size: 11px;
-    padding: 8px 6px;
+    width: 60px;
+    font-size: 13px;
+    padding: 10px 8px;
   }
 
   .time-ruler {
-    margin-left: 60px;
+    margin-left: 70px;
   }
 
   .step-block {
-    padding: 8px 10px;
-    min-width: 70px;
+    padding: 10px 12px;
+    min-width: 80px;
   }
-
+  
   .step-text {
-    font-size: 12px;
+    font-size: 14px;
   }
+  
+  .timeline-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Vertical Layout Styles */
+.timeline-container.vertical {
+  overflow-y: auto;
+  max-height: 800px;
+}
+
+.timeline-container.vertical .timeline-scroll {
+  display: flex;
+  flex-direction: column;
+  min-width: auto !important;
+}
+
+.timeline-container.vertical .time-ruler {
+  position: relative;
+  width: 60px;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 2px solid #ddd;
+  flex-shrink: 0;
+}
+
+.timeline-container.vertical .time-mark {
+  position: relative;
+  left: auto !important;
+  width: 100%;
+  padding: 8px 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.timeline-container.vertical .time-mark span {
+  display: block;
+  text-align: center;
+}
+
+.timeline-container.vertical .tracks {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-container.vertical .track-section {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.timeline-container.vertical .track-label {
+  writing-mode: horizontal-tb;
+  width: 100px;
+  border-left: none;
+  border-top: 4px solid;
+}
+
+.timeline-container.vertical .track-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 10px;
+}
+
+.timeline-container.vertical .step-block {
+  position: relative;
+  left: auto !important;
+  width: auto !important;
+  margin-left: 0;
 }

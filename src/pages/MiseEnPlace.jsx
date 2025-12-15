@@ -163,7 +163,10 @@ function MiseEnPlace() {
         </div>
       </div>
 
-      <h2>Mise en Place</h2>
+      <div className="title-with-tooltip">
+        <h2>Mise en Place</h2>
+        <span className="info-icon" title="Mise en place (MEEZ ahn plahs) is a French culinary phrase meaning 'everything in its place.' It refers to having all your ingredients prepped and tools ready before you start cooking.">ⓘ</span>
+      </div>
       <i className="description">Check off items as you gather them.</i>
 
       <div className="checklist-section">
