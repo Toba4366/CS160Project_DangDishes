@@ -20,12 +20,24 @@ function SearchResults() {
         setLoading(true);
         setError(null);
 
-        const searchedIngredients = filters?.selectedIngredients || ['chicken'];
+        // Combine recipe name search and ingredients into a single search array
+        // This allows searching for recipe names and ingredients together
+        let searchTerms = filters?.selectedIngredients || [];
+        
+        // Add recipe name to search terms if provided
+        if (filters?.recipeNameSearch?.trim()) {
+          searchTerms = [...searchTerms, filters.recipeNameSearch.trim()];
+        }
+        
+        // Default to 'chicken' if no search terms
+        if (searchTerms.length === 0) {
+          searchTerms = ['chicken'];
+        }
 
         // Fetch both web results and history in parallel
         const [webData, historyData] = await Promise.all([
           recipeService.searchRecipes(
-            searchedIngredients,
+            searchTerms,
             { maxResults: 10 }
           ),
           recipeService.getHistory()
